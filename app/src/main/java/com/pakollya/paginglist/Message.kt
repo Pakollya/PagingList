@@ -11,13 +11,13 @@ interface Message {
     fun handle(load: LoadNext) = Unit
     fun handle(load: LoadPrevious) = Unit
     fun show(vararg views: BaseView) = Unit
-    fun id(): String
+    fun id(): Long
     fun content(): String
     fun type(): Type
 
     abstract class Abstract(private val type: Type): Message {
         override fun type() = type
-        override fun id(): String = type().toString()
+        override fun id(): Long = type().ordinal.toLong()
         override fun content(): String = type.toString()
     }
 
@@ -41,7 +41,7 @@ interface Message {
             views[2].show(timestamp)
         }
 
-        override fun id(): String = id.toString()
+        override fun id(): Long = id
 
         override fun content(): String = content
     }
