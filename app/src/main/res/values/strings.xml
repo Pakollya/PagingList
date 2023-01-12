@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">PagingList</string>
+    <string name="load_next">Load Next</string>
+    <string name="load_previous">Load Previous</string>
 </resources>
