@@ -13,7 +13,16 @@ class MainActivity : AppCompatActivity() {
         val binding = ActivityMainBinding.inflate(LayoutInflater.from(this))
         setContentView(binding.root)
 
-        val adapter = Adapter(viewModel)
+        val adapter = Adapter(
+            viewModel,
+            object : ClickListener {
+                override fun click(id: Long) {
+                    viewModel.loadPageById(150)
+                    val position = viewModel.positionById(150)
+                    binding.recyclerView.scrollToPosition(position)
+                }
+            }
+        )
 
         binding.recyclerView.adapter = adapter
 
