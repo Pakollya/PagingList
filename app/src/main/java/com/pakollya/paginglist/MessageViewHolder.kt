@@ -10,9 +10,15 @@ abstract class MessageViewHolder(private val binding: ViewBinding) : RecyclerVie
 
     abstract fun bind(message: Message)
 
-    class Base(private val binding: MessageLayoutBinding) : MessageViewHolder(binding) {
+    class Base(
+        private val binding: MessageLayoutBinding,
+        private val clickListener: ClickListener
+        ) : MessageViewHolder(binding) {
         override fun bind(message: Message) {
             message.show(binding.id, binding.content, binding.time)
+            binding.messageItem.setOnClickListener{
+                clickListener.click(message.id())
+            }
         }
     }
 

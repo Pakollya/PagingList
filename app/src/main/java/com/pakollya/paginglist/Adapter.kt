@@ -7,7 +7,10 @@ import com.pakollya.paginglist.databinding.MessageLayoutBinding
 import com.pakollya.paginglist.databinding.NextLayoutBinding
 import com.pakollya.paginglist.databinding.PreviousLayoutBinding
 
-class Adapter(private val load: Load) : RecyclerView.Adapter<MessageViewHolder>() {
+class Adapter(
+    private val load: Load,
+    private val clickListener: ClickListener
+    ) : RecyclerView.Adapter<MessageViewHolder>() {
 
     private val list = mutableListOf<Message>()
 
@@ -22,7 +25,8 @@ class Adapter(private val load: Load) : RecyclerView.Adapter<MessageViewHolder>(
                     LayoutInflater.from(parent.context),
                     parent,
                     false
-                )
+                ),
+                clickListener
             )
             Message.Type.NEXT.ordinal -> MessageViewHolder.LoadNextMessages(
                 NextLayoutBinding.inflate(
@@ -58,4 +62,8 @@ class Adapter(private val load: Load) : RecyclerView.Adapter<MessageViewHolder>(
         list.addAll(data)
         result.dispatchUpdatesTo(this)
     }
+}
+
+interface ClickListener {
+    fun click(id: Long)
 }
