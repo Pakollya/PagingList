@@ -28,6 +28,15 @@ class MessagesViewModel(
         communication.map(list)
     }
 
+    fun loadPageById(id: Int) {
+        if (repository.changePage(id)) {
+            val list = repository.messages()
+            communication.map(list)
+        }
+    }
+
+    fun positionById(id: Int): Int = repository.positionOnPageById(id)
+
     override fun observe(owner: LifecycleOwner, observer: Observer<List<Message>>) {
         communication.observe(owner, observer)
     }
