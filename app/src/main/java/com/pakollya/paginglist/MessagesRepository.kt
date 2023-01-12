@@ -1,7 +1,7 @@
 package com.pakollya.paginglist
 
-import com.pakollya.paginglist.MessagesRepository.Strategy.NEXT
-import com.pakollya.paginglist.MessagesRepository.Strategy.PREVIOUS
+import android.util.Log
+import com.pakollya.paginglist.MessagesRepository.Strategy.*
 
 interface MessagesRepository {
 
@@ -13,7 +13,11 @@ interface MessagesRepository {
 
     fun init()
 
-    fun messages(strategy: Strategy): List<Message>
+    fun messages(strategy: Strategy = INIT): List<Message>
+
+    fun changePage(id: Int): Boolean
+
+    fun positionOnPageById(id: Int): Int
 
     fun addMessage()
 
@@ -47,6 +51,26 @@ interface MessagesRepository {
             }
 
             return list
+        }
+
+        override fun changePage(id: Int): Boolean {
+            val itemPage = id/PAGE_SIZE
+            Log.d("OldPage ", "$page")
+            Log.d("NewPage ", "$itemPage")
+
+            return if (itemPage == page){
+                false
+            } else {
+                page = itemPage
+                true
+            }
+        }
+
+        override fun positionOnPageById(id: Int): Int {
+            Log.d("id ", "$id")
+            Log.d("page*PAGE_SIZE ", "${page*PAGE_SIZE}")
+            Log.d("position ", "${id - page*PAGE_SIZE + 1}")
+            return id - page*PAGE_SIZE + 1
         }
 
         override fun addMessage() {
