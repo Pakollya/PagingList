@@ -63,7 +63,3 @@ class Adapter(
         result.dispatchUpdatesTo(this)
     }
 }
-
-interface ClickListener {
-    fun click(id: Long)
-}
