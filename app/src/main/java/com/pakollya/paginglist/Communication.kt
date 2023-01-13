@@ -4,20 +4,42 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 
-interface Communication: Observe {
+interface Communication: Observe, IsSelectedId {
 
     fun map(list: List<Message>)
 
+    fun showNewId(id: Int)
+
     class Base(
-        private val liveData: MutableLiveData<List<Message>> = MutableLiveData<List<Message>>()
+        private val list: MutableLiveData<List<Message>> = MutableLiveData<List<Message>>(),
+        private val id: MutableLiveData<Int> = MutableLiveData<Int>()
     ): Communication {
         override fun map(list: List<Message>) {
-            liveData.value = list
+            this.list.value = list
         }
 
-        override fun observe(owner: LifecycleOwner, observer: Observer<List<Message>>) {
-            liveData.observe(owner, observer)
+        override fun showNewId(id: Int) {
+            this.id.value = id
         }
 
+        override fun isSelectedId(id: Long): Boolean {
+            val value = this.id.value
+            return if(value == null)
+                false
+            else
+                value.toLong() == id
+        }
+
+        override fun observeList(owner: LifecycleOwner, observer: Observer<List<Message>>) {
+            list.observe(owner, observer)
+        }
+
+        override fun observeId(owner: LifecycleOwner, observer: Observer<Int>) {
+            id.observe(owner, observer)
+        }
     }
+}
+
+interface IsSelectedId {
+    fun isSelectedId(id: Long): Boolean
 }
