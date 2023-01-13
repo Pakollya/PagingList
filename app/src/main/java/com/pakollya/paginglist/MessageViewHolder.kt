@@ -15,7 +15,7 @@ abstract class MessageViewHolder(private val binding: ViewBinding) : RecyclerVie
         private val clickListener: ClickListener
         ) : MessageViewHolder(binding) {
         override fun bind(message: Message) {
-            message.show(binding.id, binding.content, binding.time)
+            message.show(binding.id, binding.content, binding.time, binding.messageItem)
             binding.messageItem.setOnClickListener{
                 clickListener.click(message.id())
             }
