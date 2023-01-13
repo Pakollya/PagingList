@@ -1,8 +1,5 @@
 package com.pakollya.paginglist
 
-import java.text.SimpleDateFormat
-import java.util.*
-
 interface MessageCache {
 
     fun init()
@@ -11,9 +8,10 @@ interface MessageCache {
 
     fun addMessage()
 
-    object Cache: MessageCache {
+    fun count(): Int
+
+    class Base : MessageCache {
         private var listMessage = mutableListOf<Message.Data>()
-        private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
         override fun messages(): List<Message.Data> = listMessage
 
@@ -24,15 +22,13 @@ interface MessageCache {
 
         override fun init() {
             listMessage.clear()
-            for (i in 0..300L) {
+            for (i in 0..350L) {
                 listMessage.add(Message.Data(i, "message $i", date()))
             }
         }
 
-        private fun date(): String {
-            return dateFormat.format(Date()).toString()
-        }
+        override fun count() = listMessage.count()
 
+        private fun date(): Long = System.currentTimeMillis()
     }
-
 }
