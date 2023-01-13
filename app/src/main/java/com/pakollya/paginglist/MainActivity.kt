@@ -3,6 +3,7 @@ package com.pakollya.paginglist
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.widget.Toast
 import com.pakollya.paginglist.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -17,8 +18,11 @@ class MainActivity : AppCompatActivity() {
             viewModel,
             object : ClickListener {
                 override fun click(id: Long) {
-                    viewModel.loadPageById(150)
-                    val position = viewModel.positionById(150)
+                    val randomId = viewModel.randomId()
+                    viewModel.mapId(randomId)
+                    viewModel.loadPageById(randomId)
+
+                    val position = viewModel.positionById(randomId)
                     binding.recyclerView.scrollToPosition(position)
                 }
             }
@@ -26,10 +30,19 @@ class MainActivity : AppCompatActivity() {
 
         binding.recyclerView.adapter = adapter
 
+        binding.addMessageButton.setOnClickListener{
+            viewModel.addMessage()
+            binding.recyclerView.scrollToPosition(adapter.itemCount - 1)
+        }
+
         viewModel.init(savedInstanceState == null)
 
-        viewModel.observe(this) {
+        viewModel.observeList(this) {
             adapter.update(it)
+        }
+
+        viewModel.observeId(this) {
+            Toast.makeText(this, "Move to $it item",Toast.LENGTH_LONG).show()
         }
     }
 }
