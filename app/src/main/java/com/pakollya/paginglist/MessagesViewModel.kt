@@ -1,13 +1,12 @@
 package com.pakollya.paginglist
 
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import com.pakollya.paginglist.MessagesRepository.Strategy.*
 
 class MessagesViewModel(
     private val repository: MessagesRepository = MessagesRepository.Base(),
-    private val communication: Communication = Communication.Base(MutableLiveData<List<Message>>())
+    private val communication: Communication = DependencyContainer.Base.provideCommunication()
 ) : Load, Observe {
 
     fun init(isFirstRun: Boolean) {
@@ -37,7 +36,24 @@ class MessagesViewModel(
 
     fun positionById(id: Int): Int = repository.positionOnPageById(id)
 
-    override fun observe(owner: LifecycleOwner, observer: Observer<List<Message>>) {
-        communication.observe(owner, observer)
+    fun randomId() = repository.randomId()
+
+    fun mapId(id: Int) {
+        communication.showNewId(id)
+    }
+
+    fun addMessage() {
+        repository.addMessage()
+        repository.setLastPage()
+        val list = repository.messages()
+        communication.map(list)
+    }
+
+    override fun observeList(owner: LifecycleOwner, observer: Observer<List<Message>>) {
+        communication.observeList(owner, observer)
+    }
+
+    override fun observeId(owner: LifecycleOwner, observer: Observer<Int>) {
+        communication.observeId(owner, observer)
     }
 }
