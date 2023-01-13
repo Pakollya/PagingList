@@ -1,5 +1,8 @@
 package com.pakollya.paginglist
 
+import java.text.SimpleDateFormat
+import java.util.*
+
 interface Message {
 
     enum class Type {
@@ -32,17 +35,20 @@ interface Message {
     data class Data(
         val id:Long,
         val content:String,
-        val timestamp:String
+        val timestamp:Long,
+        private val isSelected: IsSelectedId = DependencyContainer.Base.provideCommunication()
     ) : Abstract(Type.DATA) {
-        //TODO: Add Custom TextView
+        private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+
         override fun show(vararg views: BaseView) {
             views[0].show(id.toString())
             views[1].show(content)
-            views[2].show(timestamp)
+            views[2].show(dateFormat.format(Date(timestamp)))
+            views[3].select(isSelected.isSelectedId(id))
         }
 
         override fun id(): Long = id
 
-        override fun content(): String = content
+        override fun content(): String = content + isSelected.isSelectedId(id)
     }
 }
