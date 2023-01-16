@@ -14,7 +14,7 @@ class MainActivity : AppCompatActivity() {
         val binding = ActivityMainBinding.inflate(LayoutInflater.from(this))
         setContentView(binding.root)
 
-        val adapter = Adapter(
+        val controller = MessageController(
             viewModel,
             object : ClickListener {
                 override fun click(id: Long) {
@@ -28,17 +28,17 @@ class MainActivity : AppCompatActivity() {
             }
         )
 
-        binding.recyclerView.adapter = adapter
+        binding.recyclerView.adapter = controller.adapter
 
         binding.addMessageButton.setOnClickListener{
             viewModel.addMessage()
-            binding.recyclerView.scrollToPosition(adapter.itemCount - 1)
+            binding.recyclerView.scrollToPosition(controller.adapter.itemCount - 1)
         }
 
         viewModel.init(savedInstanceState == null)
 
         viewModel.observeList(this) {
-            adapter.update(it)
+            controller.update(it)
         }
 
         viewModel.observeId(this) {
