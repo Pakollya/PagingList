@@ -12,6 +12,7 @@ interface Message {
     fun handle(load: LoadPrevious) = Unit
     fun show(vararg views: BaseView) = Unit
     fun index(): Long
+    fun messageId(): Long = -1L
 
     object Next : Message {
         override fun handle(load: LoadNext) = load.loadNext()
@@ -48,5 +49,7 @@ interface Message {
         }
 
         override fun index(): Long = id + 3L
+
+        override fun messageId() = id
     }
 }
