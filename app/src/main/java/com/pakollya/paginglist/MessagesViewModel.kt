@@ -33,6 +33,7 @@ class MessagesViewModel(
             val list = repository.messages(NEXT)
             withContext(Dispatchers.Main) {
                 communication.map(list)
+                communication.showPosition(0)
             }
         }
 
@@ -43,6 +44,7 @@ class MessagesViewModel(
             val list = repository.messages(PREVIOUS)
             withContext(Dispatchers.Main) {
                 communication.map(list)
+                communication.showPosition(list.size - 1)
             }
         }
     }
