@@ -32,8 +32,6 @@ class MainActivity : AppCompatActivity() {
 
         binding.addMessageButton.setOnClickListener{
             viewModel.addMessage()
-            //TODO: check scroll
-            binding.recyclerView.scrollToPosition(controller.adapter.itemCount - 1)
         }
 
         viewModel.init(savedInstanceState == null)
