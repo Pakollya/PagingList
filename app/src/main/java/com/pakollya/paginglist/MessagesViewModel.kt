@@ -82,11 +82,12 @@ class MessagesViewModel(
 
     fun addMessage() {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.addMessage()
+            val position = repository.addMessage()
             repository.setLastPage()
             val list = repository.messages()
             withContext(Dispatchers.Main) {
                 communication.map(list)
+                communication.showPosition(position)
             }
         }
     }
