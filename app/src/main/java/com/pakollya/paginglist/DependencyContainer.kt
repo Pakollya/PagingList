@@ -24,8 +24,10 @@ interface DependencyContainer {
             return MessagesViewModel(
                 MessagesRepository.Base(
                     cache.dataBase().messagesDao(),
-                    DaysRepository.Base(cache.dataBase().daysDao())
-                )
+                    DaysRepository.Base(cache.dataBase().daysDao()),
+                    provideMessageFactory()
+                ),
+                provideCommunication()
             )
         }
     }
