@@ -1,52 +1,94 @@
 package com.pakollya.paginglist
 
+import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.pakollya.paginglist.MessagesRepository.Strategy.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MessagesViewModel(
-    private val repository: MessagesRepository = MessagesRepository.Base(),
-    private val communication: Communication = DependencyContainer.Base.provideCommunication()
-) : Load, Observe {
+    private val repository: MessagesRepository,
+    private val communication: Communication
+) : ViewModel(), Load, Observe {
 
     fun init(isFirstRun: Boolean) {
-        if (isFirstRun)
-            repository.init()
+        viewModelScope.launch(Dispatchers.IO) {
+            if (isFirstRun)
+                repository.init()
 
-        val list = repository.messages(INIT)
-        communication.map(list)
-    }
+            val list = repository.messages(INIT)
 
-    override fun loadNext() {
-        val list = repository.messages(NEXT)
-        communication.map(list)
-    }
-
-    override fun loadPrevious() {
-        val list = repository.messages(PREVIOUS)
-        communication.map(list)
-    }
-
-    fun loadPageById(id: Int) {
-        if (repository.changePage(id)) {
-            val list = repository.messages()
-            communication.map(list)
+            withContext(Dispatchers.Main) {
+                communication.map(list)
+            }
         }
     }
 
-    fun positionById(id: Int): Int = repository.positionOnPageById(id)
+    override fun loadNext() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val list = repository.messages(NEXT)
+            withContext(Dispatchers.Main) {
+                communication.map(list)
+            }
+        }
 
-    fun randomId() = repository.randomId()
+    }
+
+    override fun loadPrevious() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val list = repository.messages(PREVIOUS)
+            withContext(Dispatchers.Main) {
+                communication.map(list)
+            }
+        }
+    }
+
+    fun loadPageById(id: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = repository.positionOnPageById(id)
+            if (repository.changePage(id)) {
+                val list = repository.messages()
+                withContext(Dispatchers.Main) {
+                    communication.map(list)
+                    communication.showPosition(result)
+                }
+            } else {
+                withContext(Dispatchers.Main) {
+                    communication.showPosition(result)
+                }
+            }
+            Log.e("VM result", "$result")
+        }
+
+    }
+
+    fun positionById(id: Int) {
+         viewModelScope.launch(Dispatchers.Main) {
+             val result = repository.positionOnPageById(id)
+             withContext(Dispatchers.IO) {
+                 communication.showPosition(result)
+                 Log.e("VM result", "$result")
+             }
+         }
+    }
 
     fun mapId(id: Int) {
         communication.showNewId(id)
     }
 
     fun addMessage() {
-        repository.addMessage()
-        repository.setLastPage()
-        val list = repository.messages()
-        communication.map(list)
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.addMessage()
+            repository.setLastPage()
+            val list = repository.messages()
+            withContext(Dispatchers.Main) {
+                communication.map(list)
+            }
+        }
     }
 
     override fun observeList(owner: LifecycleOwner, observer: Observer<List<Message>>) {
@@ -55,5 +97,9 @@ class MessagesViewModel(
 
     override fun observeId(owner: LifecycleOwner, observer: Observer<Int>) {
         communication.observeId(owner, observer)
+    }
+
+    override fun observePosition(owner: LifecycleOwner, observer: Observer<Int>) {
+        communication.observePosition(owner, observer)
     }
 }
