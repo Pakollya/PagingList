@@ -1,17 +1,32 @@
 package com.pakollya.paginglist
 
+import android.content.Context
+
 interface DependencyContainer {
 
     fun provideCommunication(): Communication
 
-    fun provideCache(): MessageCache
+    fun provideMessageFactory(): MessageFactory
 
-    object Base: DependencyContainer {
+    fun provideViewModel(context: Context) : MessagesViewModel
+
+    object Base : DependencyContainer {
         private val communication = Communication.Base()
-        private val messageCache = MessageCache.Base()
+        private val messageFactory = MessageFactory.Base()
 
         override fun provideCommunication() = communication
 
-        override fun provideCache() = messageCache
+        override fun provideMessageFactory() = messageFactory
+
+        override fun provideViewModel(context: Context) : MessagesViewModel {
+            val cache = MessagesCache.Cache(context.applicationContext)
+
+            return MessagesViewModel(
+                MessagesRepository.Base(
+                    cache.dataBase().messagesDao(),
+                    DaysRepository.Base(cache.dataBase().daysDao())
+                )
+            )
+        }
     }
 }
