@@ -2,7 +2,6 @@ package com.pakollya.paginglist
 
 import android.util.Log
 import com.pakollya.paginglist.MessagesRepository.Strategy.*
-import java.util.Random
 
 interface MessagesRepository {
 
@@ -12,33 +11,29 @@ interface MessagesRepository {
         PREVIOUS
     }
 
-    fun init()
-
-    fun messages(strategy: Strategy = INIT): List<Message>
-
-    fun changePage(id: Int): Boolean
-
-    fun positionOnPageById(id: Int): Int
-
-    fun addMessage()
-
-    fun setLastPage()
-
-    fun randomId(): Int
+    suspend fun init()
+    suspend fun messages(strategy: Strategy = INIT): List<Message>
+    suspend fun changePage(id: Int): Boolean
+    suspend fun positionOnPageById(id: Int): Int
+    suspend fun addMessage()
+    suspend fun setLastPage()
 
     class Base(
-        private val cache: MessageCache = DependencyContainer.Base.provideCache()
+        private val dao: MessagesDao,
+        private val daysRepository: DaysRepository,
+        private val factory: MessageFactory
     ): MessagesRepository {
+        private val messageList = mutableListOf<Message>()
         private var page = 0
 
-        override fun init() {
-            cache.init()
+        override suspend fun init() {
+            dao.insertMessages(factory.messages())
         }
 
         /**
          * Отдаем список сообщений для одной страницы в зависимости от стратегии
          **/
-        override fun messages(strategy: Strategy): List<Message> {
+        override suspend fun messages(strategy: Strategy): List<Message> {
             //Стратегия: двигаемся на страницу вперед или назад
             if (strategy == NEXT) {
                 page++
@@ -47,7 +42,11 @@ interface MessagesRepository {
             }
 
             //Получаем все сообщения и создаем новый список для отображения
-            val allMessages = cache.messages()
+            val allMessages = dao.messages()
+            if (allMessages.isNotEmpty()) {
+                daysRepository.parseMessages(allMessages)
+            }
+
             val list = mutableListOf<Message>()
 
             //если НЕ первая страница, то добавляем возможность вернуться на предыдущую страницу
@@ -55,34 +54,45 @@ interface MessagesRepository {
                 list.add(Message.Previous)
             }
 
-            //Добавляем границу для последней страницы, т.к. ее размер может быть < PAGE_SIZE
-            var bound = PAGE_SIZE
-            if (page + 1 == MAXIMUM_PAGES) {
-                bound = allMessages.last().id.toInt() - (page*PAGE_SIZE) + 1
-            }
-            Log.d("Bound", "$bound")
+            //Добавляем Header
+            list.add(Message.Header(
+                daysRepository.dateStringByIndex(page)
+            ))
 
+            val date = daysRepository.dateMillisByIndex(page)
             //Добавляем в список сообщения для страницы page
-            for (i in 0 until bound) {
-                list.add(allMessages[(page* PAGE_SIZE) + i])
-            }
+            list.addAll(
+                allMessages.filter { date <= it.timestamp &&
+                        it.timestamp < (date + daysRepository.dayMillis())
+                }
+            )
 
             //если НЕ последняя страница, то добавляем возможность перейти на следующую страницу
-            if (page + 1 < MAXIMUM_PAGES) {
+            if (page + 1 < daysRepository.daysCount()) {
                 list.add(Message.Next)
+            }
+
+            if (list.isNotEmpty()) {
+                messageList.clear()
+                messageList.addAll(list)
             }
 
             return list
         }
 
+        suspend fun dateById(id: Long): Long {
+            return daysRepository.dateToStartDay(dao.dateById(id))
+        }
+
         /**
          * Меняем значение страницы на новый по id элемента
          **/
-        override fun changePage(id: Int): Boolean {
-            //Находим страницу на которой расположен элемент
-            val itemPage = id/PAGE_SIZE
-            Log.d("OldPage ", "$page")
-            Log.d("NewPage ", "$itemPage")
+        override suspend fun changePage(id: Int): Boolean {
+            //Находим индекс страницы по дате
+            val date = dateById(id.toLong())
+            val itemPage = daysRepository.indexByDate(date)
+
+            Log.d("ItemPage ", "$itemPage")
 
             //проверяем находимся ли мы сейчас на данной странице или на другой
             return if (itemPage == page){
@@ -93,29 +103,39 @@ interface MessagesRepository {
             }
         }
 
-        override fun setLastPage() {
-            page = MAXIMUM_PAGES - 1
+        override suspend fun setLastPage() {
+            //TODO: check
+            page = daysRepository.daysCount() - 1
         }
 
         /**
          * Вычисляем позицию элемента в списке по id (для RecyclerView)
          **/
-        override fun positionOnPageById(id: Int): Int {
+        override suspend fun positionOnPageById(id: Int): Int {
             Log.d("id ", "$id")
-            Log.d("page*PAGE_SIZE ", "${page*PAGE_SIZE}")
-            Log.d("position ", "${id - page*PAGE_SIZE + 1}")
-            return id - page*PAGE_SIZE + 1
+            val date = dateById(id.toLong())
+            val messages = dao.messages(date, date + daysRepository.dayMillis())
+
+            if (messages.isNotEmpty()) {
+                messages.forEachIndexed { index, data ->
+                    if (data.messageId() == id.toLong()) {
+                        //TODO:check
+                        Log.e("positionOnPageById", "$index")
+                        return index + 1
+                    }
+                }
+            }
+
+            return 0
         }
 
-        override fun addMessage() {
-            cache.addMessage()
-        }
-
-        override fun randomId(): Int = Random().nextInt(cache.count())
-
-        companion object {
-            private const val PAGE_SIZE = 100
-            private const val MAXIMUM_PAGES = 4
+        override suspend fun addMessage() {
+            val lastId = messageList.last().messageId()
+            dao.addMessage(Message.Data(
+                lastId + 10,
+                "message ${lastId + 10}",
+                System.currentTimeMillis()
+            ))
         }
     }
 }
