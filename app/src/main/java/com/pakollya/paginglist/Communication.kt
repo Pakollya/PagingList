@@ -10,9 +10,12 @@ interface Communication: Observe, IsSelectedId {
 
     fun showNewId(id: Int)
 
+    fun showPosition(position: Int)
+
     class Base(
         private val list: MutableLiveData<List<Message>> = MutableLiveData<List<Message>>(),
-        private val id: MutableLiveData<Int> = MutableLiveData<Int>()
+        private val id: MutableLiveData<Int> = MutableLiveData<Int>(),
+        private val position: MutableLiveData<Int> = MutableLiveData<Int>()
     ): Communication {
         override fun map(list: List<Message>) {
             this.list.value = list
@@ -20,6 +23,10 @@ interface Communication: Observe, IsSelectedId {
 
         override fun showNewId(id: Int) {
             this.id.value = id
+        }
+
+        override fun showPosition(position: Int) {
+            this.position.value = position
         }
 
         override fun isSelectedId(id: Long): Boolean {
@@ -36,6 +43,10 @@ interface Communication: Observe, IsSelectedId {
 
         override fun observeId(owner: LifecycleOwner, observer: Observer<Int>) {
             id.observe(owner, observer)
+        }
+
+        override fun observePosition(owner: LifecycleOwner, observer: Observer<Int>) {
+            position.observe(owner, observer)
         }
     }
 }
