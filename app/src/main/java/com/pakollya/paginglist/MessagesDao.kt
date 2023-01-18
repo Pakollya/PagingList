@@ -22,4 +22,7 @@ interface MessagesDao {
 
     @Query("SELECT * FROM messages WHERE timestamp >= :startDate AND timestamp < :endDate  ORDER BY timestamp")
     fun messages(startDate: Long, endDate: Long): List<Message.Data>
+
+    @Query("SELECT MAX(id) FROM messages")
+    fun lastId(): Long
 }
