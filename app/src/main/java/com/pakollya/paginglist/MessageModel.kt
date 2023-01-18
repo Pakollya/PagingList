@@ -20,7 +20,7 @@ public abstract class MessageModel : EpoxyModelWithHolder<MessageModel.ViewHolde
     override fun bind(holder: ViewHolder) {
         message.show(holder.id, holder.content, holder.time, holder.item)
         holder.item.setOnClickListener {
-            click.click(message.id())
+            click.click()
         }
     }
 
