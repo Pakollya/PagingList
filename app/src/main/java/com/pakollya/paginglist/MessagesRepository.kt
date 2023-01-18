@@ -15,7 +15,7 @@ interface MessagesRepository {
     suspend fun messages(strategy: Strategy = INIT): List<Message>
     suspend fun changePage(id: Int): Boolean
     suspend fun positionOnPageById(id: Int): Int
-    suspend fun addMessage()
+    suspend fun addMessage(): Int
     suspend fun setLastPage()
 
     class Base(
@@ -129,13 +129,23 @@ interface MessagesRepository {
             return 0
         }
 
-        override suspend fun addMessage() {
-            val lastId = messageList.last().messageId()
+        override suspend fun addMessage(): Int {
+            val now = System.currentTimeMillis()
+            val lastId = dao.lastId()
             dao.addMessage(Message.Data(
                 lastId + 10,
                 "message ${lastId + 10}",
-                System.currentTimeMillis()
+                now
             ))
+            val nowStartDate = daysRepository.dateToStartDay(now)
+            val messagesCount = dao
+                .messages(
+                    nowStartDate,
+                    nowStartDate + daysRepository.dayMillis()
+                )
+                .count()
+
+            return messagesCount + 1
         }
     }
 }
