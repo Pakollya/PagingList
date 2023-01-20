@@ -8,7 +8,7 @@ interface DependencyContainer {
 
     fun provideMessageFactory(): MessageFactory
 
-    fun provideViewModel(context: Context) : MessagesViewModel
+    fun provideViewModel(context: Context): MessagesViewModel
 
     object Base : DependencyContainer {
         private val communication = Communication.Base()
@@ -18,14 +18,18 @@ interface DependencyContainer {
 
         override fun provideMessageFactory() = messageFactory
 
-        override fun provideViewModel(context: Context) : MessagesViewModel {
+        override fun provideViewModel(context: Context): MessagesViewModel {
             val cache = MessagesCache.Cache(context.applicationContext)
 
             return MessagesViewModel(
                 MessagesRepository.Base(
-                    cache.dataBase().messagesDao(),
-                    DaysRepository.Base(cache.dataBase().daysDao()),
-                    provideMessageFactory()
+                    dao = cache.dataBase().messagesDao(),
+                    pagesRepository = PagesRepository.Base(
+                        messagesDao = cache.dataBase().messagesDao(),
+                        dayPartsDao = cache.dataBase().dayPartsDao(),
+                        pagesDao = cache.dataBase().pagesDao()
+                    ),
+                    factory = provideMessageFactory()
                 ),
                 provideCommunication()
             )
