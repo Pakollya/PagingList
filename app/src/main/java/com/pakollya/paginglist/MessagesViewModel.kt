@@ -63,19 +63,7 @@ class MessagesViewModel(
                     communication.showPosition(result)
                 }
             }
-            Log.e("VM result", "$result")
         }
-
-    }
-
-    fun positionById(id: Int) {
-         viewModelScope.launch(Dispatchers.Main) {
-             val result = repository.positionOnPageById(id)
-             withContext(Dispatchers.IO) {
-                 communication.showPosition(result)
-                 Log.e("VM result", "$result")
-             }
-         }
     }
 
     fun mapId(id: Int) {
@@ -84,9 +72,10 @@ class MessagesViewModel(
 
     fun addMessage() {
         viewModelScope.launch(Dispatchers.IO) {
-            val position = repository.addMessage()
+            repository.addMessage()
             repository.setLastPage()
             val list = repository.messages()
+            val position = repository.lastPosition()
             withContext(Dispatchers.Main) {
                 communication.map(list)
                 communication.showPosition(position)
