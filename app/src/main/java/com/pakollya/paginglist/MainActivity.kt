@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
             viewModel,
             object : ClickListener {
                 override fun click() {
-                    val randomId = 120
+                    val randomId = 20900
                     viewModel.mapId(randomId)
                     viewModel.loadPageById(randomId)
                 }
