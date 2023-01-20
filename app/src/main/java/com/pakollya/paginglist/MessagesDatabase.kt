@@ -6,13 +6,16 @@ import androidx.room.RoomDatabase
 @Database(
     entities = [
         Message.Data::class,
-        Day::class
+        DayPart::class,
+        Page::class
     ],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 abstract class MessagesDatabase : RoomDatabase() {
     abstract fun messagesDao(): MessagesDao
 
-    abstract fun daysDao(): DaysDao
+    abstract fun dayPartsDao(): DayPartsDao
+
+    abstract fun pagesDao(): PagesDao
 }
