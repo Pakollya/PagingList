@@ -262,7 +262,7 @@ interface PagesRepository {
                         endId = messagesPerDay.last().messageId(),
                         reminder = reminder,
                         startPosition = startPosition,
-                        endPosition = (startPosition + partSize),
+                        endPosition = (startPosition + partSize - 1),
                         date = currentDate
                     )
 
@@ -271,7 +271,7 @@ interface PagesRepository {
 
                 //переходим на следующий день
                 counter++
-                startPosition += (partSize + 1)
+                startPosition += partSize
                 currentPage++
                 currentDate += dayMillis()
                 partSize = 0
