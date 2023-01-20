@@ -15,113 +15,114 @@ interface MessagesRepository {
     suspend fun messages(strategy: Strategy = INIT): List<Message>
     suspend fun changePage(id: Int): Boolean
     suspend fun positionOnPageById(id: Int): Int
-    suspend fun addMessage(): Int
+    suspend fun addMessage()
     suspend fun setLastPage()
+    suspend fun lastPosition(): Int
 
     class Base(
         private val dao: MessagesDao,
-        private val daysRepository: DaysRepository,
+        private val pagesRepository: PagesRepository,
         private val factory: MessageFactory
-    ): MessagesRepository {
-        private val messageList = mutableListOf<Message>()
-        private var page = 0
+    ) : MessagesRepository {
 
         override suspend fun init() {
+            dao.delete()
             dao.insertMessages(factory.messages())
+        }
+
+        /**
+         * Получаем индекс стриницы и количество стриниц
+         * отдаем список сообщений для данной стриницы на UI
+         **/
+        suspend fun messagesByPage(pageIndex: Int, pageCount: Int): List<Message> {
+            //создаем новый список для отображения
+            val list = mutableListOf<Message>()
+
+            //если НЕ первая страница, то добавляем возможность вернуться на предыдущую страницу
+            if (pageIndex > 0) {
+                list.add(Message.Previous)
+            }
+
+            //Получаем все кусочки дня, находящиеся на странице
+            val dayParts = pagesRepository.dayPartsByPageIndex(pageIndex)
+
+            dayParts.forEach { day ->
+                val tempMessages = dao.messagesById(day.startId, day.endId)
+
+                if (tempMessages.isNotEmpty()) {
+                    //Добавляем Header если это начало дня, а НЕ остаток дня
+                    if (!day.reminder) {
+                        list.add(Message.Header(pagesRepository.dateStringFromMillis(day.date)))
+                    }
+                    list.addAll(tempMessages)
+                }
+            }
+
+            //если НЕ последняя страница, то добавляем возможность перейти на следующую страницу
+            if (pageIndex < pageCount) {
+                list.add(Message.Next)
+            }
+
+            return list
         }
 
         /**
          * Отдаем список сообщений для одной страницы в зависимости от стратегии
          **/
         override suspend fun messages(strategy: Strategy): List<Message> {
-            //Стратегия: двигаемся на страницу вперед или назад
-            if (strategy == NEXT) {
-                page++
-            } else if (strategy == PREVIOUS) {
-                page--
-            }
+            pagesRepository.updateStrategy(strategy)
 
-            //Получаем все сообщения и создаем новый список для отображения
+            Log.e("messages", "${pagesRepository.currentPage()}")
+
+            //Получаем все сообщения
             val allMessages = dao.messages()
-            if (allMessages.isNotEmpty()) {
-                daysRepository.parseMessages(allMessages)
-            }
 
-            val list = mutableListOf<Message>()
+            //вычисляем количество страниц и сохраняем
+            pagesRepository.updatePageCount(allMessages.size)
 
-            //если НЕ первая страница, то добавляем возможность вернуться на предыдущую страницу
-            if (page > 0) {
-                list.add(Message.Previous)
-            }
-
-            //Добавляем Header
-            list.add(Message.Header(
-                daysRepository.dateStringByIndex(page)
-            ))
-
-            val date = daysRepository.dateMillisByIndex(page)
-            //Добавляем в список сообщения для страницы page
-            list.addAll(
-                allMessages.filter { date <= it.timestamp &&
-                        it.timestamp < (date + daysRepository.dayMillis())
-                }
+            //парсим все сообщения на страницы, а также на дни внутри страницы
+            pagesRepository.parseAllMessages(
+                messages = allMessages,
+                pageCount = pagesRepository.pageCount(),
+                pageSize = pagesRepository.pageSize()
             )
 
-            //если НЕ последняя страница, то добавляем возможность перейти на следующую страницу
-            if (page + 1 < daysRepository.daysCount()) {
-                list.add(Message.Next)
-            }
-
-            if (list.isNotEmpty()) {
-                messageList.clear()
-                messageList.addAll(list)
-            }
-
-            return list
-        }
-
-        suspend fun dateById(id: Long): Long {
-            return daysRepository.dateToStartDay(dao.dateById(id))
+            return messagesByPage(
+                pageIndex = pagesRepository.currentPage(),
+                pageCount = pagesRepository.pageCount()
+            )
         }
 
         /**
          * Меняем значение страницы на новый по id элемента
          **/
         override suspend fun changePage(id: Int): Boolean {
-            //Находим индекс страницы по дате
-            val date = dateById(id.toLong())
-            val itemPage = daysRepository.indexByDate(date)
+            //Находим индекс страницы по id элемента
+            val pageIndex = pagesRepository.pageIndexById(id.toLong())
 
-            Log.d("ItemPage ", "$itemPage")
+            Log.e("changePage pageIndex", "$pageIndex")
 
             //проверяем находимся ли мы сейчас на данной странице или на другой
-            return if (itemPage == page){
-                false
-            } else {
-                page = itemPage
-                true
-            }
+            return pagesRepository.updatePage(pageIndex)
         }
 
         override suspend fun setLastPage() {
-            //TODO: check
-            page = daysRepository.daysCount() - 1
+            pagesRepository.setLastPage()
         }
 
         /**
          * Вычисляем позицию элемента в списке по id (для RecyclerView)
          **/
         override suspend fun positionOnPageById(id: Int): Int {
-            Log.d("id ", "$id")
-            val date = dateById(id.toLong())
-            val messages = dao.messages(date, date + daysRepository.dayMillis())
+            val dayPart = pagesRepository.dayPartById(id.toLong())
+            val messages = dao.messagesById(dayPart.startId, dayPart.endId)
 
             if (messages.isNotEmpty()) {
                 messages.forEachIndexed { index, data ->
                     if (data.messageId() == id.toLong()) {
                         //TODO:check
-                        Log.e("positionOnPageById", "$index")
-                        return index + 1
+                        val position = dayPart.startPosition + index
+                        return position
                     }
                 }
             }
@@ -129,23 +130,20 @@ interface MessagesRepository {
             return 0
         }
 
-        override suspend fun addMessage(): Int {
+        override suspend fun addMessage() {
             val now = System.currentTimeMillis()
             val lastId = dao.lastId()
+
             dao.addMessage(Message.Data(
                 lastId + 10,
                 "message ${lastId + 10}",
                 now
             ))
-            val nowStartDate = daysRepository.dateToStartDay(now)
-            val messagesCount = dao
-                .messages(
-                    nowStartDate,
-                    nowStartDate + daysRepository.dayMillis()
-                )
-                .count()
+        }
 
-            return messagesCount + 1
+        override suspend fun lastPosition(): Int {
+            val lastId = dao.lastId()
+            return pagesRepository.lastPositionById(lastId)
         }
     }
 }
