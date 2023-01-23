@@ -6,27 +6,28 @@ import androidx.lifecycle.Observer
 
 interface Communication: Observe, IsSelectedId {
 
-    fun map(list: List<Message>)
-
     fun showNewId(id: Int)
 
     fun showPosition(position: Int)
 
+    fun showMessages(messages: MessagesPageUi)
+
     class Base(
         private val list: MutableLiveData<List<Message>> = MutableLiveData<List<Message>>(),
         private val id: MutableLiveData<Int> = MutableLiveData<Int>(),
-        private val position: MutableLiveData<Int> = MutableLiveData<Int>()
+        private val position: MutableLiveData<Int> = MutableLiveData<Int>(),
+        private val messages: MutableLiveData<MessagesPageUi> = MutableLiveData<MessagesPageUi>()
     ): Communication {
-        override fun map(list: List<Message>) {
-            this.list.value = list
-        }
-
         override fun showNewId(id: Int) {
             this.id.value = id
         }
 
         override fun showPosition(position: Int) {
             this.position.value = position
+        }
+
+        override fun showMessages(messages: MessagesPageUi) {
+            this.messages.value = messages
         }
 
         override fun isSelectedId(id: Long): Boolean {
@@ -37,16 +38,16 @@ interface Communication: Observe, IsSelectedId {
                 value.toLong() == id
         }
 
-        override fun observeList(owner: LifecycleOwner, observer: Observer<List<Message>>) {
-            list.observe(owner, observer)
-        }
-
         override fun observeId(owner: LifecycleOwner, observer: Observer<Int>) {
             id.observe(owner, observer)
         }
 
         override fun observePosition(owner: LifecycleOwner, observer: Observer<Int>) {
             position.observe(owner, observer)
+        }
+
+        override fun observeMessages(owner: LifecycleOwner, observer: Observer<MessagesPageUi>) {
+            messages.observe(owner, observer)
         }
     }
 }
