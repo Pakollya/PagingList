@@ -1,6 +1,5 @@
 package com.pakollya.paginglist
 
-import android.util.Log
 import com.pakollya.paginglist.MessagesRepository.Strategy
 import java.text.SimpleDateFormat
 import java.util.*
@@ -297,9 +296,6 @@ interface PagesRepository {
 
                 //количество сообщений за день
                 partSize = messagesPerDay.size
-
-                Log.e("For counter", "$counter")
-                Log.e("For pageSize", "$partSize")
 
                 if (partSize > 0) {
                     //находим абсолютно все сообщения за данный день из всей базы
