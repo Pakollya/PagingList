@@ -1,6 +1,5 @@
 package com.pakollya.paginglist
 
-import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
@@ -20,20 +19,20 @@ class MessagesViewModel(
             if (isFirstRun)
                 repository.init()
 
-            val list = repository.messages(INIT)
+            val messages = repository.messages(INIT)
 
             withContext(Dispatchers.Main) {
-                communication.map(list)
+                communication.showMessages(messages)
             }
         }
     }
 
     override fun loadNext() {
         viewModelScope.launch(Dispatchers.IO) {
-            val list = repository.messages(NEXT)
+            //TODO: check page==lastPage
+            val messages = repository.messages(NEXT)
             withContext(Dispatchers.Main) {
-                communication.map(list)
-                communication.showPosition(0)
+                communication.showMessages(messages)
             }
         }
 
@@ -41,10 +40,10 @@ class MessagesViewModel(
 
     override fun loadPrevious() {
         viewModelScope.launch(Dispatchers.IO) {
-            val list = repository.messages(PREVIOUS)
+            //TODO: check page==0
+            val messages = repository.messages(PREVIOUS)
             withContext(Dispatchers.Main) {
-                communication.map(list)
-                communication.showPosition(list.size - 1)
+                communication.showMessages(messages)
             }
         }
     }
@@ -53,9 +52,9 @@ class MessagesViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val result = repository.positionOnPageById(id)
             if (repository.changePage(id)) {
-                val list = repository.messages()
+                val messages = repository.messages(INIT)
                 withContext(Dispatchers.Main) {
-                    communication.map(list)
+                    communication.showMessages(messages)
                     communication.showPosition(result)
                 }
             } else {
@@ -74,17 +73,13 @@ class MessagesViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             repository.addMessage()
             repository.setLastPage()
-            val list = repository.messages()
+            val messages = repository.messages(INIT)
             val position = repository.lastPosition()
             withContext(Dispatchers.Main) {
-                communication.map(list)
+                communication.showMessages(messages)
                 communication.showPosition(position)
             }
         }
-    }
-
-    override fun observeList(owner: LifecycleOwner, observer: Observer<List<Message>>) {
-        communication.observeList(owner, observer)
     }
 
     override fun observeId(owner: LifecycleOwner, observer: Observer<Int>) {
@@ -93,5 +88,9 @@ class MessagesViewModel(
 
     override fun observePosition(owner: LifecycleOwner, observer: Observer<Int>) {
         communication.observePosition(owner, observer)
+    }
+
+    override fun observeMessages(owner: LifecycleOwner, observer: Observer<MessagesPageUi>) {
+        communication.observeMessages(owner, observer)
     }
 }
