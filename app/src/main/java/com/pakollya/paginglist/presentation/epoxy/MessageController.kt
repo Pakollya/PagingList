@@ -1,7 +1,12 @@
-package com.pakollya.paginglist
+package com.pakollya.paginglist.presentation.epoxy
 
 import com.airbnb.epoxy.EpoxyController
-import com.pakollya.paginglist.MessagesRepository.Strategy.*
+import com.pakollya.paginglist.*
+import com.pakollya.paginglist.data.cache.message.Message
+import com.pakollya.paginglist.data.MessagesRepository.Strategy.*
+import com.pakollya.paginglist.presentation.MessagesPageUi
+import com.pakollya.paginglist.presentation.common.ClickListener
+import com.pakollya.paginglist.presentation.common.Load
 
 class MessageController(
     private val load: Load,

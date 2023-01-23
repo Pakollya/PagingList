@@ -1,11 +1,14 @@
-package com.pakollya.paginglist
+package com.pakollya.paginglist.presentation
 
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.pakollya.paginglist.DependencyContainer
 import com.pakollya.paginglist.databinding.ActivityMainBinding
+import com.pakollya.paginglist.presentation.common.ClickListener
+import com.pakollya.paginglist.presentation.epoxy.MessageController
 
 class MainActivity : AppCompatActivity() {
     private lateinit var viewModel: MessagesViewModel

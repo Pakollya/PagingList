@@ -1,9 +1,10 @@
-package com.pakollya.paginglist
+package com.pakollya.paginglist.presentation.common
 
 import android.content.Context
 import android.util.AttributeSet
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import com.pakollya.paginglist.R
 
 class CustomTextView : androidx.appcompat.widget.AppCompatTextView, BaseView {
     constructor(context: Context) : super(context)

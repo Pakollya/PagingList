@@ -1,4 +1,4 @@
-package com.pakollya.paginglist
+package com.pakollya.paginglist.presentation.common
 
 interface Load : LoadNext, LoadPrevious
 interface LoadNext{

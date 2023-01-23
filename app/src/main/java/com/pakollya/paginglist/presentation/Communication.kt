@@ -1,8 +1,10 @@
-package com.pakollya.paginglist
+package com.pakollya.paginglist.presentation
 
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import com.pakollya.paginglist.data.cache.message.Message
+import com.pakollya.paginglist.presentation.common.Observe
 
 interface Communication: Observe, IsSelectedId {
 

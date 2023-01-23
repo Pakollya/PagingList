@@ -1,4 +1,4 @@
-package com.pakollya.paginglist
+package com.pakollya.paginglist.data.cache.day
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

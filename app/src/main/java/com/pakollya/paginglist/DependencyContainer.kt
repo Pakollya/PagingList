@@ -1,6 +1,12 @@
 package com.pakollya.paginglist
 
 import android.content.Context
+import com.pakollya.paginglist.data.MessageFactory
+import com.pakollya.paginglist.data.cache.MessagesCache
+import com.pakollya.paginglist.data.MessagesRepository
+import com.pakollya.paginglist.data.PagesRepository
+import com.pakollya.paginglist.presentation.Communication
+import com.pakollya.paginglist.presentation.MessagesViewModel
 
 interface DependencyContainer {
 

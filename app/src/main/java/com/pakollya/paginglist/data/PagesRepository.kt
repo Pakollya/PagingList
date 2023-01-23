@@ -1,6 +1,13 @@
-package com.pakollya.paginglist
+package com.pakollya.paginglist.data
 
-import com.pakollya.paginglist.MessagesRepository.Strategy
+import com.pakollya.paginglist.presentation.MessagesPageUi
+import com.pakollya.paginglist.data.MessagesRepository.Strategy
+import com.pakollya.paginglist.data.cache.day.DayPart
+import com.pakollya.paginglist.data.cache.day.DayPartsDao
+import com.pakollya.paginglist.data.cache.message.Message
+import com.pakollya.paginglist.data.cache.message.MessagesDao
+import com.pakollya.paginglist.data.cache.page.Page
+import com.pakollya.paginglist.data.cache.page.PagesDao
 import java.text.SimpleDateFormat
 import java.util.*
 

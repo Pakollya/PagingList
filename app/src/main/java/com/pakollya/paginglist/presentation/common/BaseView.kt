@@ -1,4 +1,4 @@
-package com.pakollya.paginglist
+package com.pakollya.paginglist.presentation.common
 
 import android.view.View
 

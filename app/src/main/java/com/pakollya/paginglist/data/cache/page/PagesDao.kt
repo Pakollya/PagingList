@@ -1,4 +1,4 @@
-package com.pakollya.paginglist
+package com.pakollya.paginglist.data.cache.page
 
 import androidx.room.Dao
 import androidx.room.Insert

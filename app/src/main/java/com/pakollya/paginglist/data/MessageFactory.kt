@@ -1,4 +1,6 @@
-package com.pakollya.paginglist
+package com.pakollya.paginglist.data
+
+import com.pakollya.paginglist.data.cache.message.Message
 
 interface MessageFactory {
 

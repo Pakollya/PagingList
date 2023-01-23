@@ -1,8 +1,13 @@
-package com.pakollya.paginglist
+package com.pakollya.paginglist.data.cache.message
 
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
+import com.pakollya.paginglist.DependencyContainer
+import com.pakollya.paginglist.presentation.common.BaseView
+import com.pakollya.paginglist.presentation.IsSelectedId
+import com.pakollya.paginglist.presentation.common.LoadNext
+import com.pakollya.paginglist.presentation.common.LoadPrevious
 import java.text.SimpleDateFormat
 import java.util.*
 

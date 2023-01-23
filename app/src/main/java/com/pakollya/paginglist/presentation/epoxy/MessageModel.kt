@@ -1,4 +1,4 @@
-package com.pakollya.paginglist
+package com.pakollya.paginglist.presentation.epoxy
 
 import android.annotation.SuppressLint
 import android.view.View
@@ -6,6 +6,11 @@ import com.airbnb.epoxy.EpoxyAttribute
 import com.airbnb.epoxy.EpoxyHolder
 import com.airbnb.epoxy.EpoxyModelClass
 import com.airbnb.epoxy.EpoxyModelWithHolder
+import com.pakollya.paginglist.data.cache.message.Message
+import com.pakollya.paginglist.R
+import com.pakollya.paginglist.presentation.common.ClickListener
+import com.pakollya.paginglist.presentation.common.CustomConstraintLayout
+import com.pakollya.paginglist.presentation.common.CustomTextView
 
 @SuppressLint("NonConstantResourceId")
 @EpoxyModelClass(layout = R.layout.message_layout)

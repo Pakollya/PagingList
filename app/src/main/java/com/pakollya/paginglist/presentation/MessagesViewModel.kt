@@ -1,10 +1,13 @@
-package com.pakollya.paginglist
+package com.pakollya.paginglist.presentation
 
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pakollya.paginglist.MessagesRepository.Strategy.*
+import com.pakollya.paginglist.data.MessagesRepository
+import com.pakollya.paginglist.data.MessagesRepository.Strategy.*
+import com.pakollya.paginglist.presentation.common.Load
+import com.pakollya.paginglist.presentation.common.Observe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

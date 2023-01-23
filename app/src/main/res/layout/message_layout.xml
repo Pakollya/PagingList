@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.pakollya.paginglist.CustomConstraintLayout
+<com.pakollya.paginglist.presentation.common.CustomConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -10,7 +10,7 @@
     android:layout_marginBottom="4dp"
     >
 
-    <com.pakollya.paginglist.CustomTextView
+    <com.pakollya.paginglist.presentation.common.CustomTextView
         android:id="@+id/id"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -25,7 +25,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         />
 
-    <com.pakollya.paginglist.CustomTextView
+    <com.pakollya.paginglist.presentation.common.CustomTextView
         android:id="@+id/content"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -42,7 +42,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         />
 
-    <com.pakollya.paginglist.CustomTextView
+    <com.pakollya.paginglist.presentation.common.CustomTextView
         android:id="@+id/time"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -59,4 +59,4 @@
         app:layout_constraintEnd_toEndOf="parent"
         />
 
-</com.pakollya.paginglist.CustomConstraintLayout>
+</com.pakollya.paginglist.presentation.common.CustomConstraintLayout>
