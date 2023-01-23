@@ -1,18 +1,49 @@
 package com.pakollya.paginglist
 
 import com.airbnb.epoxy.EpoxyController
+import com.pakollya.paginglist.MessagesRepository.Strategy.*
 
 class MessageController(
     private val load: Load,
     private val clickListener: ClickListener
 ) : EpoxyController() {
+    private var listPageUi = mutableListOf<MessagesPageUi>()
     private var list = mutableListOf<Message>()
 
-    fun update(data: List<Message>) {
-        list.clear()
-        list.addAll(data)
+    fun update(ui: MessagesPageUi) {
+        when(ui.strategy) {
+            INIT -> init(ui)
+            NEXT -> loadNext(ui)
+            PREVIOUS -> loadPrevious(ui)
+        }
 
         requestModelBuild()
+    }
+
+    fun init(ui: MessagesPageUi) {
+        listPageUi.clear()
+        list.clear()
+
+        listPageUi.add(ui)
+        list.addAll(ui.messages)
+    }
+
+    fun loadNext(ui: MessagesPageUi) {
+        if (listPageUi.size >= 2) {
+            list.subList(0, listPageUi[0].pageSize).clear()
+            listPageUi.removeAt(0)
+        }
+        listPageUi.add(ui)
+        list.addAll(ui.messages)
+    }
+
+    fun loadPrevious(ui: MessagesPageUi) {
+        if (listPageUi.size >= 2) {
+            list.subList(listPageUi[0].pageSize, listPageUi[0].pageSize +  listPageUi[1].pageSize).clear()
+            listPageUi.removeLast()
+        }
+        listPageUi.add(0, ui)
+        list.addAll(0, ui.messages)
     }
 
     override fun buildModels() {
