@@ -1,7 +1,5 @@
 package com.pakollya.paginglist
 
-import android.util.Log
-
 interface MessageFactory {
 
     fun messages(): List<Message.Data>
@@ -19,15 +17,11 @@ interface MessageFactory {
                     0 -> for (k in 1..100) {
                         id = k*10 + 20000L
                         listMessage.add(Message.Data(id, "message $id", tempDate))
-                        if (k == 50)
-                            Log.e("LastId", "$id")
                     }
 
                     1 -> for (k in 1..50) {
                         id = k*10 + 9000L
                         listMessage.add(Message.Data(id, "message $id", tempDate))
-                        if (k == 50)
-                            Log.e("LastId", "$id")
                     }
 
                     2 -> for (k in 1..70) {
