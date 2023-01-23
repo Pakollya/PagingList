@@ -1,6 +1,5 @@
 package com.pakollya.paginglist
 
-import android.util.Log
 import com.pakollya.paginglist.MessagesRepository.Strategy.*
 
 interface MessagesRepository {
@@ -12,7 +11,7 @@ interface MessagesRepository {
     }
 
     suspend fun init()
-    suspend fun messages(strategy: Strategy = INIT): List<Message>
+    suspend fun messages(strategy: Strategy = INIT): MessagesPageUi
     suspend fun changePage(id: Int): Boolean
     suspend fun positionOnPageById(id: Int): Int
     suspend fun addMessage()
@@ -69,11 +68,7 @@ interface MessagesRepository {
         /**
          * Отдаем список сообщений для одной страницы в зависимости от стратегии
          **/
-        override suspend fun messages(strategy: Strategy): List<Message> {
-            pagesRepository.updateStrategy(strategy)
-
-            Log.e("messages", "${pagesRepository.currentPage()}")
-
+        override suspend fun messages(strategy: Strategy): MessagesPageUi {
             //Получаем все сообщения
             val allMessages = dao.messages()
 
@@ -81,16 +76,28 @@ interface MessagesRepository {
             pagesRepository.updatePageCount(allMessages.size)
 
             //парсим все сообщения на страницы, а также на дни внутри страницы
-            pagesRepository.parseAllMessages(
-                messages = allMessages,
-                pageCount = pagesRepository.pageCount(),
-                pageSize = pagesRepository.pageSize()
-            )
+            pagesRepository.parseAllMessages(allMessages)
 
-            return messagesByPage(
-                pageIndex = pagesRepository.currentPage(),
+            val pageIndex = pagesRepository.pageByStrategy(strategy)
+
+            val messages = messagesByPage(
+                pageIndex = pageIndex,
                 pageCount = pagesRepository.pageCount()
             )
+
+            val messagesUi = MessagesPageUi(
+                messages = messages,
+                pageIndex = pageIndex,
+                pageSize = messages.size,
+                strategy = strategy
+            )
+
+            pagesRepository.updateCurrentPageUi(
+                page = messagesUi,
+                strategy = strategy
+            )
+
+            return messagesUi
         }
 
         /**
@@ -99,8 +106,6 @@ interface MessagesRepository {
         override suspend fun changePage(id: Int): Boolean {
             //Находим индекс страницы по id элемента
             val pageIndex = pagesRepository.pageIndexById(id.toLong())
-
-            Log.e("changePage pageIndex", "$pageIndex")
 
             //проверяем находимся ли мы сейчас на данной странице или на другой
             return pagesRepository.updatePage(pageIndex)
@@ -117,17 +122,24 @@ interface MessagesRepository {
             val dayPart = pagesRepository.dayPartById(id.toLong())
             val messages = dao.messagesById(dayPart.startId, dayPart.endId)
 
+            var position = 0
             if (messages.isNotEmpty()) {
                 messages.forEachIndexed { index, data ->
                     if (data.messageId() == id.toLong()) {
-                        //TODO:check
-                        val position = dayPart.startPosition + index
-                        return position
+                        position = dayPart.startPosition + index
                     }
                 }
             }
 
-            return 0
+            //если мы уже находимся на странице, то проверяем вторая ли она (есть ли перед ней страница, чтобы скорректировать position)
+            val pages = pagesRepository.currentPagesUi()
+
+            if (pages.isNotEmpty() && pages.size >= 2 && pages[1].pageIndex == dayPart.pageIndex) {
+                position += pages[0].pageSize
+            }
+
+
+            return position
         }
 
         override suspend fun addMessage() {
