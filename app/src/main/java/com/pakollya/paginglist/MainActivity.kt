@@ -36,10 +36,6 @@ class MainActivity : AppCompatActivity() {
 
         viewModel.init(savedInstanceState == null)
 
-        viewModel.observeList(this) {
-            controller.update(it)
-        }
-
         viewModel.observeId(this) {
             Toast.makeText(this, "Move to $it item",Toast.LENGTH_LONG).show()
         }
@@ -47,6 +43,10 @@ class MainActivity : AppCompatActivity() {
         viewModel.observePosition(this) {
             binding.recyclerView.scrollToPosition(it)
             Log.e("Activity position", "$it")
+        }
+
+        viewModel.observeMessages(this) {
+            controller.update(it)
         }
     }
 }
