@@ -56,20 +56,6 @@ class MessageController(
     override fun buildModels() {
         list.forEach { item ->
             when (item) {
-                is Message.Next -> {
-                    next {
-                        id(item.index())
-                        message(item)
-                        load(this@MessageController.load)
-                    }
-                }
-                is Message.Previous -> {
-                    previous {
-                        id(item.index())
-                        message(item)
-                        load(this@MessageController.load)
-                    }
-                }
                 is Message.Header -> {
                     header {
                         id(item.index())
