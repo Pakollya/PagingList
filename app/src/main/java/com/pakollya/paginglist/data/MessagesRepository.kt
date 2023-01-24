@@ -42,11 +42,6 @@ interface MessagesRepository {
             //создаем новый список для отображения
             val list = mutableListOf<Message>()
 
-            //если НЕ первая страница, то добавляем возможность вернуться на предыдущую страницу
-            if (pageIndex > 0) {
-                list.add(Message.Previous)
-            }
-
             //Получаем все кусочки дня, находящиеся на странице
             val dayParts = pagesRepository.dayPartsByPageIndex(pageIndex)
 
@@ -60,11 +55,6 @@ interface MessagesRepository {
                     }
                     list.addAll(tempMessages)
                 }
-            }
-
-            //если НЕ последняя страница, то добавляем возможность перейти на следующую страницу
-            if (pageIndex < pageCount) {
-                list.add(Message.Next)
             }
 
             return list
