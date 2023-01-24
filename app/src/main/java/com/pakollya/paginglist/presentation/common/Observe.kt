@@ -10,4 +10,6 @@ interface Observe {
     fun observePosition(owner: LifecycleOwner, observer: Observer<Int>)
 
     fun observeMessages(owner: LifecycleOwner, observer: Observer<MessagesPageUi>)
+
+    fun observeProgress(owner: LifecycleOwner, observer: Observer<Int>)
 }
