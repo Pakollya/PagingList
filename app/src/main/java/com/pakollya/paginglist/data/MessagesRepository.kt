@@ -20,6 +20,8 @@ interface MessagesRepository {
     suspend fun addMessage()
     suspend fun setLastPage()
     suspend fun lastPosition(): Int
+    fun isLastPage(): Boolean
+    fun isFirstPage(): Boolean
 
     class Base(
         private val dao: MessagesDao,
@@ -160,5 +162,9 @@ interface MessagesRepository {
             val lastId = dao.lastId()
             return pagesRepository.lastPositionById(lastId)
         }
+
+        override fun isLastPage() = pagesRepository.isLastPage()
+
+        override fun isFirstPage() = pagesRepository.isFirstPage()
     }
 }
