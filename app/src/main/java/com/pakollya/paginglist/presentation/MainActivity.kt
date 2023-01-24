@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.pakollya.paginglist.DependencyContainer
 import com.pakollya.paginglist.databinding.ActivityMainBinding
 import com.pakollya.paginglist.presentation.common.ClickListener
@@ -33,6 +34,12 @@ class MainActivity : AppCompatActivity() {
 
         binding.recyclerView.adapter = controller.adapter
 
+        val scrollListener = MessagesScrollListener(
+            manager = binding.recyclerView.layoutManager as LinearLayoutManager,
+            load = viewModel
+        )
+        binding.recyclerView.addOnScrollListener(scrollListener)
+
         binding.addMessageButton.setOnClickListener{
             viewModel.addMessage()
         }
@@ -50,6 +57,10 @@ class MainActivity : AppCompatActivity() {
 
         viewModel.observeMessages(this) {
             controller.update(it)
+        }
+
+        viewModel.observeProgress(this) {
+            binding.progress.visibility = it
         }
     }
 }
