@@ -18,6 +18,8 @@ interface PagesRepository {
     fun pageSize(): Int
     fun currentPages(): List<Int>
     fun currentPagesUi(): List<MessagesPageUi>
+    fun isLastPage(): Boolean
+    fun isFirstPage(): Boolean
 
     fun dayMillis(): Long
     fun dateStringFromMillis(date: Long): String
@@ -52,7 +54,7 @@ interface PagesRepository {
         private val messagesDao: MessagesDao,
         private val dayPartsDao: DayPartsDao,
         private val pagesDao: PagesDao,
-        private val pageSize: Int = 100,
+        private val pageSize: Int = 100
     ) : PagesRepository {
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
@@ -71,6 +73,22 @@ interface PagesRepository {
             val pages = mutableListOf<MessagesPageUi>()
             pages.addAll(currentPagesUi)
             return pages
+        }
+
+        override fun isLastPage(): Boolean {
+            currentPages.forEach {
+                if (it == pageCount)
+                    return true
+            }
+            return false
+        }
+
+        override fun isFirstPage(): Boolean {
+            currentPages.forEach {
+                if (it == 0)
+                    return true
+            }
+            return false
         }
 
         override fun updateCurrentPageUi(page: MessagesPageUi, strategy: Strategy) {
