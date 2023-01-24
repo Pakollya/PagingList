@@ -29,7 +29,7 @@ interface Communication: Observe, IsSelectedId, IsLoading {
         }
 
         override fun showPosition(position: Int) {
-            this.position.value = position
+            this.position.postValue(position)
         }
 
         override fun showMessages(messages: MessagesPageUi) {
