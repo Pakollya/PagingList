@@ -6,28 +6,13 @@ import androidx.room.PrimaryKey
 import com.pakollya.paginglist.DependencyContainer
 import com.pakollya.paginglist.presentation.common.BaseView
 import com.pakollya.paginglist.presentation.IsSelectedId
-import com.pakollya.paginglist.presentation.common.LoadNext
-import com.pakollya.paginglist.presentation.common.LoadPrevious
 import java.text.SimpleDateFormat
 import java.util.*
 
 interface Message {
-
-    fun handle(load: LoadNext) = Unit
-    fun handle(load: LoadPrevious) = Unit
     fun show(vararg views: BaseView) = Unit
     fun index(): Long
     fun messageId(): Long = -1L
-
-    object Next : Message {
-        override fun handle(load: LoadNext) = load.loadNext()
-        override fun index() = 0L
-    }
-
-    object Previous : Message {
-        override fun handle(load: LoadPrevious) = load.loadPrevious()
-        override fun index() = 1L
-    }
 
     data class Header(val date: String) : Message {
         override fun index() = 2L
