@@ -122,7 +122,7 @@ interface PagesRepository {
             when (strategy) {
                 Strategy.NEXT -> {
                     currentPages.forEach {
-                        if (it == pageCount){
+                        if (it == pageCount) {
                             return it
                         }
                     }
@@ -171,7 +171,7 @@ interface PagesRepository {
         }
 
         override fun updatePage(pageIndex: Int): Boolean {
-            currentPagesUi.forEach{
+            currentPagesUi.forEach {
                 if (it.pageIndex == pageIndex) {
                     return false
                 }
@@ -304,11 +304,6 @@ interface PagesRepository {
             var currentDate = startDayInMillis
             var counter = 0
             var messagesPerDay: List<Message>
-
-            //учет кнопки previous
-            if (pageIndex != 0) {
-                startPosition += 1
-            }
 
             //пробегаемся по всем дням начиная с самого первого (старого) с шагом в один день
             for (day in startDayInMillis..now step dayMillis()) {
