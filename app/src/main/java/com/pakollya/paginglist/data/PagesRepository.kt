@@ -1,5 +1,6 @@
 package com.pakollya.paginglist.data
 
+import android.util.Log
 import com.pakollya.paginglist.presentation.MessagesPageUi
 import com.pakollya.paginglist.data.MessagesRepository.Strategy
 import com.pakollya.paginglist.data.cache.day.DayPart
@@ -167,7 +168,10 @@ interface PagesRepository {
         }
 
         override fun updatePageCount(listCount: Int) {
-            pageCount = listCount / pageSize
+            val remainder: Double = (listCount % pageSize).toDouble()
+            val pages = listCount / pageSize
+            pageCount = if (remainder == 0.0) pages - 1 else pages
+
         }
 
         override fun updatePage(pageIndex: Int): Boolean {
@@ -240,6 +244,7 @@ interface PagesRepository {
         ) {
             val pageList = mutableListOf<Page>()
 
+            Log.e("pageCount", "$pageCount")
             //пробегаемся по всем стриницам: делим список сообщений на стриницы, а страницы на дни
             for (pageIndex in 0..pageCount) {
 
@@ -249,18 +254,20 @@ interface PagesRepository {
                     pageIndex = pageIndex
                 )
 
-                //сохраняем данные о старнице
-                val page = messagesToPage(
-                    messages = messages,
-                    pageIndex = pageIndex
-                )
-                pageList.add(page)
+                if (messages.isNotEmpty()) {
+                    //сохраняем данные о старнице
+                    val page = messagesToPage(
+                        messages = messages,
+                        pageIndex = pageIndex
+                    )
+                    pageList.add(page)
 
-                //список сообщений одной стриницы делим на дни
-                parseDayParts(
-                    messages = messages,
-                    pageIndex = pageIndex
-                )
+                    //список сообщений одной стриницы делим на дни
+                    parseDayParts(
+                        messages = messages,
+                        pageIndex = pageIndex
+                    )
+                }
             }
 
             if (pageList.isNotEmpty()) {
