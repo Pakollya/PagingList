@@ -1,6 +1,5 @@
 package com.pakollya.paginglist.presentation
 
-import android.util.Log
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import androidx.lifecycle.LifecycleOwner
@@ -100,12 +99,12 @@ class MessagesViewModel(
             repository.addMessage()
             repository.setLastPage()
             val messages = repository.messages(INIT)
-            val position = repository.lastPosition()
             withContext(Dispatchers.Main) {
                 communication.showMessages(messages)
-                communication.showPosition(position)
                 communication.showProgress(GONE)
             }
+            val position = repository.lastPosition()
+            communication.showPosition(position)
         }
     }
 
