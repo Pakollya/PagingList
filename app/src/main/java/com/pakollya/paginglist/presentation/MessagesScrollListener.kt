@@ -23,7 +23,9 @@ class MessagesScrollListener(
         if (!load.isLoading()) {
             if ((visibleItemCount + pastVisibleItems) >= totalItemCount) {
                 load.loadNext()
-            } else if (pastVisibleItems <= visibleItemCount) {
+            }
+
+            if (pastVisibleItems <= visibleItemCount) {
                 load.loadPrevious()
             }
         }
