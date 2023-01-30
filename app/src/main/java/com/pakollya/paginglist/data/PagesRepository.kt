@@ -1,8 +1,5 @@
 package com.pakollya.paginglist.data
 
-import android.util.Log
-import com.pakollya.paginglist.presentation.MessagesPageUi
-import com.pakollya.paginglist.data.MessagesRepository.Strategy
 import com.pakollya.paginglist.data.cache.day.DayPart
 import com.pakollya.paginglist.data.cache.day.DayPartsDao
 import com.pakollya.paginglist.data.cache.message.Message
@@ -14,28 +11,17 @@ import java.util.*
 
 interface PagesRepository {
 
-    fun pageByStrategy(strategy: Strategy): Int
-    fun pageCount(): Int
-    fun pageSize(): Int
-    fun currentPages(): List<Int>
-    fun currentPagesUi(): List<MessagesPageUi>
-    fun isLastPage(): Boolean
-    fun isFirstPage(): Boolean
-
     fun dayMillis(): Long
-    fun dateStringFromMillis(date: Long): String
     fun dateToStartDay(date: Long): Long
 
     fun updatePageCount(listCount: Int)
-    fun updatePage(pageIndex: Int): Boolean
     fun pageIndexById(id: Long): Int
-    fun updateCurrentPageUi(page: MessagesPageUi, strategy: Strategy)
 
-    suspend fun setLastPage()
-    suspend fun dayPartsByPageIndex(pageIndex: Int): List<DayPart>
+    suspend fun pageByIndex(index: Int): Page
+    fun isLastPage(index: Int): Boolean
+
     suspend fun dayPartById(id: Long): DayPart
     suspend fun parseDayParts(messages: List<Message.Data>, pageIndex: Int)
-    suspend fun lastPositionById(lastId: Long): Int
 
     fun currentPageMessages(
         messages: List<Message.Data>,
@@ -55,112 +41,19 @@ interface PagesRepository {
         private val messagesDao: MessagesDao,
         private val dayPartsDao: DayPartsDao,
         private val pagesDao: PagesDao,
-        private val pageSize: Int = 100
+        private val pageSize: Int = 50
     ) : PagesRepository {
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
-        //TODO: add pageCount and page storage
-        private val currentPages = mutableListOf(0)
-        private val currentPagesUi = mutableListOf<MessagesPageUi>()
         private var pageCount = 0
 
-        override fun currentPages(): List<Int> {
-            val pages = mutableListOf<Int>()
-            pages.addAll(currentPages)
-            return pages
+        override suspend fun pageByIndex(index: Int) = pagesDao.pageByIndex(index)
+
+        override fun isLastPage(index: Int): Boolean {
+            return index == pageCount
         }
-
-        override fun currentPagesUi(): List<MessagesPageUi> {
-            val pages = mutableListOf<MessagesPageUi>()
-            pages.addAll(currentPagesUi)
-            return pages
-        }
-
-        override fun isLastPage(): Boolean {
-            currentPages.forEach {
-                if (it == pageCount)
-                    return true
-            }
-            return false
-        }
-
-        override fun isFirstPage(): Boolean {
-            currentPages.forEach {
-                if (it == 0)
-                    return true
-            }
-            return false
-        }
-
-        override fun updateCurrentPageUi(page: MessagesPageUi, strategy: Strategy) {
-            when (strategy) {
-                Strategy.NEXT -> {
-                    currentPagesUi.forEach {
-                        if (it.pageIndex == pageCount) return
-                    }
-                    if (currentPagesUi.size >= 2) {
-                        currentPagesUi.removeAt(0)
-                    }
-                    currentPagesUi.add(page)
-                }
-                Strategy.PREVIOUS -> {
-                    currentPagesUi.forEach {
-                        if (it.pageIndex == 0) return
-                    }
-                    if (currentPagesUi.size >= 2) {
-                        currentPagesUi.removeAt(1)
-                    }
-                    currentPagesUi.add(0, page)
-                }
-                Strategy.INIT -> {
-                    currentPagesUi.clear()
-                    currentPagesUi.add(page)
-                }
-            }
-        }
-
-        override fun pageByStrategy(strategy: Strategy): Int {
-            when (strategy) {
-                Strategy.NEXT -> {
-                    currentPages.forEach {
-                        if (it == pageCount) {
-                            return it
-                        }
-                    }
-
-                    if (currentPages.size >= 2) {
-                        currentPages.removeAt(0)
-                    }
-
-                    currentPages.add(currentPages[0] + 1)
-                    return currentPages[1]
-                }
-                Strategy.PREVIOUS -> {
-                    currentPages.forEach { page ->
-                        if (page == 0) return 0
-                    }
-
-                    if (currentPages.size >= 2) {
-                        currentPages.removeAt(1)
-                    }
-
-                    currentPages.add(0, currentPages[0] - 1)
-                    return currentPages[0]
-                }
-                Strategy.INIT -> {
-                    return currentPages[0]
-                }
-            }
-        }
-
-        override fun pageCount() = pageCount
-        override fun pageSize() = pageSize
 
         override fun dayMillis(): Long = 1000 * 60 * 60 * 24
-
-        override fun dateStringFromMillis(date: Long): String {
-            return dateFormat.format(Date(date))
-        }
 
         override fun dateToStartDay(date: Long): Long {
             val dateTemp = dateFormat.format(Date(date))
@@ -171,29 +64,10 @@ interface PagesRepository {
             val remainder: Double = (listCount % pageSize).toDouble()
             val pages = listCount / pageSize
             pageCount = if (remainder == 0.0) pages - 1 else pages
-
-        }
-
-        override fun updatePage(pageIndex: Int): Boolean {
-            currentPagesUi.forEach {
-                if (it.pageIndex == pageIndex) {
-                    return false
-                }
-            }
-
-            currentPages.clear()
-            currentPages.add(pageIndex)
-
-            return true
         }
 
         override fun pageIndexById(id: Long): Int {
             return pagesDao.pageIndexById(id)
-        }
-
-        override suspend fun setLastPage() {
-            currentPages.clear()
-            currentPages.add(pageCount)
         }
 
         /**
@@ -244,7 +118,6 @@ interface PagesRepository {
         ) {
             val pageList = mutableListOf<Page>()
 
-            Log.e("pageCount", "$pageCount")
             //пробегаемся по всем стриницам: делим список сообщений на стриницы, а страницы на дни
             for (pageIndex in 0..pageCount) {
 
@@ -277,21 +150,10 @@ interface PagesRepository {
         }
 
         /**
-         * По индексу страницы получаем все дни (части дней) для данной стриницы
-         **/
-        override suspend fun dayPartsByPageIndex(pageIndex: Int): List<DayPart> {
-            return dayPartsDao.dayPartsByPage(pageIndex)
-        }
-
-        /**
          * По id сообщения получаем день (часть дня) в котором он находится
          **/
         override suspend fun dayPartById(id: Long) = dayPartsDao.dayPartById(id)
 
-        /**
-         * По последнему id сообщения получаем последнюю позицию на странице
-         **/
-        override suspend fun lastPositionById(lastId: Long) = dayPartsDao.lastPositionById(lastId)
 
         /**
          * Получаем список сообщений для одной страницы
