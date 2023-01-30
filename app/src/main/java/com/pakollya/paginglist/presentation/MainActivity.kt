@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.pakollya.paginglist.DependencyContainer
 import com.pakollya.paginglist.databinding.ActivityMainBinding
 import com.pakollya.paginglist.presentation.common.ClickListener
@@ -37,6 +38,12 @@ class MainActivity : AppCompatActivity() {
         binding.recyclerView.adapter = controller.adapter
 
         viewModel.messages()
+
+        viewModel.observeData(this) { pagingData ->
+            lifecycleScope.launchWhenStarted {
+                controller.submitData(pagingData)
+            }
+        }
 
         binding.addMessageButton.setOnClickListener{
             viewModel.addMessage()
