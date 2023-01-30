@@ -2,6 +2,7 @@ package com.pakollya.paginglist
 
 import android.content.Context
 import com.pakollya.paginglist.data.MessageFactory
+import com.pakollya.paginglist.presentation.MessagePager
 import com.pakollya.paginglist.data.cache.MessagesCache
 import com.pakollya.paginglist.data.MessagesRepository
 import com.pakollya.paginglist.data.PagesRepository
@@ -26,18 +27,20 @@ interface DependencyContainer {
 
         override fun provideViewModel(context: Context): MessagesViewModel {
             val cache = MessagesCache.Cache(context.applicationContext)
+            val messagesRepository = MessagesRepository.Base(
+                dao = cache.dataBase().messagesDao(),
+                pagesRepository = PagesRepository.Base(
+                    messagesDao = cache.dataBase().messagesDao(),
+                    dayPartsDao = cache.dataBase().dayPartsDao(),
+                    pagesDao = cache.dataBase().pagesDao()
+                ),
+                factory = provideMessageFactory()
+            )
 
             return MessagesViewModel(
-                MessagesRepository.Base(
-                    dao = cache.dataBase().messagesDao(),
-                    pagesRepository = PagesRepository.Base(
-                        messagesDao = cache.dataBase().messagesDao(),
-                        dayPartsDao = cache.dataBase().dayPartsDao(),
-                        pagesDao = cache.dataBase().pagesDao()
-                    ),
-                    factory = provideMessageFactory()
-                ),
-                provideCommunication()
+                messagesRepository,
+                provideCommunication(),
+                MessagePager.Pager(messagesRepository)
             )
         }
     }
