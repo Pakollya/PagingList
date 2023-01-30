@@ -2,13 +2,10 @@ package com.pakollya.paginglist.presentation
 
 import android.view.View.GONE
 import android.view.View.VISIBLE
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
+import androidx.paging.PagingData
 import com.pakollya.paginglist.data.MessagesRepository
-import com.pakollya.paginglist.data.MessagesRepository.Strategy.*
-import com.pakollya.paginglist.presentation.common.Load
+import com.pakollya.paginglist.data.cache.message.Message
 import com.pakollya.paginglist.presentation.common.Observe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -17,95 +14,55 @@ import kotlinx.coroutines.withContext
 class MessagesViewModel(
     private val repository: MessagesRepository,
     private val communication: Communication,
-) : ViewModel(), Load, Observe {
+    private val pager: MessagePager<PagingData<Message>>,
+) : ViewModel(), Observe {
 
     fun init(isFirstRun: Boolean) {
-        communication.mapIsLoading(true)
         communication.showProgress(VISIBLE)
         viewModelScope.launch(Dispatchers.IO) {
             if (isFirstRun)
                 repository.init()
 
-            val messages = repository.messages(INIT)
-
             withContext(Dispatchers.Main) {
-                communication.showMessages(messages)
                 communication.showProgress(GONE)
             }
         }
     }
 
-    override fun loadNext() {
-        if (!repository.isLastPage()) {
-            communication.mapIsLoading(true)
-            communication.showProgress(VISIBLE)
-            viewModelScope.launch(Dispatchers.IO) {
-                val messages = repository.messages(NEXT)
-                withContext(Dispatchers.Main) {
-                    communication.showMessages(messages)
-                    communication.showProgress(GONE)
-                }
-            }
-        }
-    }
-
-    override fun loadPrevious() {
-        if (!repository.isFirstPage()) {
-            communication.mapIsLoading(true)
-            communication.showProgress(VISIBLE)
-            viewModelScope.launch(Dispatchers.IO) {
-                val messages = repository.messages(PREVIOUS)
-                withContext(Dispatchers.Main) {
-                    communication.showMessages(messages)
-                    communication.showProgress(GONE)
-                }
-            }
-        }
-    }
-
-    fun loadPageById(id: Int) {
+    fun messages() {
         viewModelScope.launch(Dispatchers.IO) {
-            val result = repository.positionOnPageById(id)
-            if (repository.changePage(id)) {
-                communication.showProgress(VISIBLE)
-                val messages = repository.messages(INIT)
-                withContext(Dispatchers.Main) {
-                    communication.showMessages(messages)
-                    communication.showPosition(result)
-                    communication.showProgress(GONE)
-                }
-            } else {
-                withContext(Dispatchers.Main) {
-                    communication.showPosition(result)
-                    communication.showProgress(GONE)
-                }
+            pager.messagePagingData(viewModelScope).collect { pagingData ->
+                communication.showData(pagingData)
             }
+        }
+    }
+
+    fun messagesById(id: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val pageIndex = repository.pageIndexById(id)
+            pager.messagePagingData(viewModelScope, pageIndex).collect { pagingData ->
+                communication.showData(pagingData)
+            }
+        }
+    }
+
+    fun showPosition(id: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val position = repository.positionOnPageById(id)
+            withContext(Dispatchers.Main) {
+                communication.showPosition(position)
+            }
+        }
+    }
+
+    fun addMessage() {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.addMessage()
         }
     }
 
     fun mapId(id: Int) {
         communication.showNewId(id)
-    }
-
-    override fun mapIsLoading(isLoading: Boolean) {
-        communication.mapIsLoading(isLoading)
-    }
-
-    override fun isLoading() = communication.isLoading()
-
-    fun addMessage() {
-        viewModelScope.launch(Dispatchers.IO) {
-            communication.showProgress(VISIBLE)
-            repository.addMessage()
-            repository.setLastPage()
-            val messages = repository.messages(INIT)
-            withContext(Dispatchers.Main) {
-                communication.showMessages(messages)
-                communication.showProgress(GONE)
-            }
-            val position = repository.lastPosition()
-            communication.showPosition(position)
-        }
     }
 
     override fun observeId(owner: LifecycleOwner, observer: Observer<Int>) {
@@ -116,11 +73,11 @@ class MessagesViewModel(
         communication.observePosition(owner, observer)
     }
 
-    override fun observeMessages(owner: LifecycleOwner, observer: Observer<MessagesPageUi>) {
-        communication.observeMessages(owner, observer)
-    }
-
     override fun observeProgress(owner: LifecycleOwner, observer: Observer<Int>) {
         communication.observeProgress(owner, observer)
+    }
+
+    override fun observeData(owner: LifecycleOwner, observer: Observer<PagingData<Message>>) {
+        communication.observeData(owner, observer)
     }
 }
