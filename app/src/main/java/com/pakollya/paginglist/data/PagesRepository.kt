@@ -41,7 +41,7 @@ interface PagesRepository {
         private val messagesDao: MessagesDao,
         private val dayPartsDao: DayPartsDao,
         private val pagesDao: PagesDao,
-        private val pageSize: Int = 50
+        private val pageSize: Int = 100
     ) : PagesRepository {
         private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
