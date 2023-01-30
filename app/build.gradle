@@ -50,6 +50,9 @@ dependencies {
 
     def epoxyVersion = "5.0.0"
     implementation "com.airbnb.android:epoxy:$epoxyVersion"
+    implementation "com.airbnb.android:epoxy-paging:$epoxyVersion"
+    implementation "com.airbnb.android:epoxy-paging3:$epoxyVersion"
+    implementation "com.airbnb.android:epoxy-viewbinder:$epoxyVersion"
     kapt "com.airbnb.android:epoxy-processor:$epoxyVersion"
 
     def roomVersion = "2.4.2"
@@ -57,6 +60,9 @@ dependencies {
     implementation "androidx.room:room-ktx:$roomVersion"
     implementation "androidx.room:room-paging:$roomVersion"
     kapt "androidx.room:room-compiler:$roomVersion"
+
+    def pagingVersion = "3.1.1"
+    implementation "androidx.paging:paging-runtime-ktx:$pagingVersion"
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
