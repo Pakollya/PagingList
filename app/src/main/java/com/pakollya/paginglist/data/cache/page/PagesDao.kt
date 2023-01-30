@@ -13,6 +13,9 @@ interface PagesDao {
     @Query("SELECT `index` FROM pages WHERE startId <= :id AND endId >= :id")
     fun pageIndexById(id: Long): Int
 
+    @Query("SELECT * FROM pages WHERE `index` LIKE :index")
+    fun pageByIndex(index: Int): Page
+
     @Query("DELETE FROM pages")
     fun deletePages()
 }
