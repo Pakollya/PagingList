@@ -4,7 +4,6 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 import androidx.paging.PagingData
 import com.pakollya.paginglist.data.cache.message.Message
-import com.pakollya.paginglist.presentation.MessagesPageUi
 
 interface Observe {
     fun observeId(owner: LifecycleOwner, observer: Observer<Int>)
