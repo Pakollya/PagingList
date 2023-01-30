@@ -13,6 +13,7 @@ interface Message {
     fun show(vararg views: BaseView) = Unit
     fun index(): Long
     fun messageId(): Long = -1L
+    fun day(): String = ""
 
     data class Header(val date: String) : Message {
         override fun index() = 2L
@@ -34,12 +35,14 @@ interface Message {
         override fun show(vararg views: BaseView) {
             views[0].show(id.toString())
             views[1].show(content)
-            views[2].show(dateFormat.format(Date(timestamp)))
+            views[2].show(day())
             views[3].select(isSelected.isSelectedId(id))
         }
 
         override fun index(): Long = id + 3L
 
         override fun messageId() = id
+
+        override fun day(): String = dateFormat.format(Date(timestamp))
     }
 }
