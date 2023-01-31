@@ -6,26 +6,19 @@ import com.pakollya.paginglist.data.cache.message.Message
 import com.pakollya.paginglist.presentation.common.ClickListener
 
 class MessageController(
-    private val clickListener: ClickListener
+    private val clickListener: ClickListener,
 ) : PagingDataEpoxyController<Message>() {
 
     override fun buildItemModel(currentPosition: Int, item: Message?): EpoxyModel<*> {
-        return when (item) {
-            null -> {
-                PlaceHolderModel_()
-                    .id(1L)
-            }
-            is Message.Header -> {
-                HeaderModel_()
-                    .id(item.index())
-                    .date(item.date)
-            }
-            else -> {
-                MessageModel_()
-                    .id(item.index())
-                    .message(item)
-                    .click(clickListener)
-            }
+        return if (item is Message.Header) {
+            HeaderModel_()
+                .id(item.index())
+                .date(item.date)
+        } else {
+            MessageModel_()
+                .id(item?.index() ?: 1L)
+                .message(item)
+                .click(clickListener)
         }
     }
 }
