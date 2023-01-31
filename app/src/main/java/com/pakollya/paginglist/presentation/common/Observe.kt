@@ -13,4 +13,6 @@ interface Observe {
     fun observeProgress(owner: LifecycleOwner, observer: Observer<Int>)
     
     fun observeData(owner: LifecycleOwner, observer: Observer<PagingData<Message>>)
+
+    fun observeMessages(owner: LifecycleOwner, observer: Observer<List<Message>>)
 }

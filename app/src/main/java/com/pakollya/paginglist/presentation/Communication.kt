@@ -17,11 +17,14 @@ interface Communication : Observe, IsSelectedId {
 
     fun showData(data: PagingData<Message>)
 
+    fun showMessages(messages: List<Message>)
+
     class Base(
         private val id: MutableLiveData<Int> = MutableLiveData<Int>(),
         private val position: MutableLiveData<Int> = MutableLiveData<Int>(),
         private val progress: MutableLiveData<Int> = MutableLiveData<Int>(),
-        private val data: MutableLiveData<PagingData<Message>> = MutableLiveData<PagingData<Message>>()
+        private val data: MutableLiveData<PagingData<Message>> = MutableLiveData<PagingData<Message>>(),
+        private val messages: MutableLiveData<List<Message>> = MutableLiveData<List<Message>>()
     ) : Communication {
         
         override fun showData(data: PagingData<Message>) {
@@ -38,6 +41,10 @@ interface Communication : Observe, IsSelectedId {
 
         override fun showProgress(show: Int) {
             this.progress.postValue(show)
+        }
+
+        override fun showMessages(messages: List<Message>) {
+            this.messages.postValue(messages)
         }
 
         override fun isSelectedId(id: Long): Boolean {
@@ -62,6 +69,10 @@ interface Communication : Observe, IsSelectedId {
 
         override fun observeData(owner: LifecycleOwner, observer: Observer<PagingData<Message>>) {
             data.observe(owner, observer)
+        }
+
+        override fun observeMessages(owner: LifecycleOwner, observer: Observer<List<Message>>) {
+            messages.observe(owner, observer)
         }
     }
 }
