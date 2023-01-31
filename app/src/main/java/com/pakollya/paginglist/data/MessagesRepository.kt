@@ -1,7 +1,9 @@
 package com.pakollya.paginglist.data
 
+import androidx.paging.DataSource
 import com.pakollya.paginglist.data.cache.message.Message
 import com.pakollya.paginglist.data.cache.message.MessagesDao
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -9,11 +11,10 @@ interface MessagesRepository {
 
     suspend fun init()
     suspend fun updatePages()
-    suspend fun messagesByPageIndex(pageIndex: Int): List<Message>
     suspend fun addMessage()
-    suspend fun pageIndexById(id: Int): Int
     suspend fun positionOnPageById(id: Int): Int
-    fun isLastPage(index: Int): Boolean
+    fun messagesDataSource(): DataSource.Factory<Int, Message.Data>
+    fun messagesFlow(): Flow<List<Message.Data>>
 
     class Base(
         private val dao: MessagesDao,
@@ -23,12 +24,16 @@ interface MessagesRepository {
 
         private val mutex = Mutex()
 
+        override fun messagesDataSource() = dao.messagesDataSource()
+
+        override fun messagesFlow() = dao.messagesFlow()
+
         override suspend fun init() = mutex.withLock {
             dao.delete()
             dao.insertMessages(factory.messages())
         }
 
-        override suspend fun updatePages() {
+        override suspend fun updatePages() = mutex.withLock {
             //Получаем все сообщения
             val allMessages = dao.messages()
 
@@ -39,28 +44,6 @@ interface MessagesRepository {
             pagesRepository.parseAllMessages(allMessages)
         }
 
-        override suspend fun messagesByPageIndex(pageIndex: Int): List<Message> = mutex.withLock {
-            updatePages()
-
-            val messages = messagesByPage(
-                pageIndex = pageIndex
-            )
-
-            return messages
-        }
-
-        override suspend fun pageIndexById(id: Int): Int = mutex.withLock {
-            pagesRepository.pageIndexById(id.toLong())
-        }
-
-        suspend fun messagesByPage(pageIndex: Int): List<Message> {
-            val page = pagesRepository.pageByIndex(pageIndex)
-            val messages = dao.messagesById(page.startId, page.endId)
-
-            return messages
-        }
-
-
         /**
          * Вычисляем позицию элемента в списке по id (для RecyclerView)
          **/
@@ -69,10 +52,11 @@ interface MessagesRepository {
             val messages = dao.messagesById(dayPart.startId, dayPart.endId)
 
             var position = 0
+
             if (messages.isNotEmpty()) {
                 messages.forEachIndexed { index, data ->
                     if (data.messageId() == id.toLong()) {
-                        position = dayPart.startPosition + index
+                        position = (dayPart.startPosition + if(index > 2) (index - 2) else index)
                         return@forEachIndexed
                     }
                 }
@@ -81,7 +65,7 @@ interface MessagesRepository {
             return position
         }
 
-        override suspend fun addMessage() {
+        override suspend fun addMessage() = mutex.withLock {
             val now = System.currentTimeMillis()
             val lastId = dao.lastId()
 
@@ -91,7 +75,5 @@ interface MessagesRepository {
                 now
             ))
         }
-
-        override fun isLastPage(index: Int) = pagesRepository.isLastPage(index)
     }
 }
