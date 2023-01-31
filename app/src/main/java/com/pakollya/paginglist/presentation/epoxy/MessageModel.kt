@@ -14,16 +14,23 @@ import com.pakollya.paginglist.presentation.common.CustomTextView
 
 @SuppressLint("NonConstantResourceId")
 @EpoxyModelClass(layout = R.layout.message_layout)
-public abstract class MessageModel : EpoxyModelWithHolder<MessageModel.ViewHolder>() {
+abstract class MessageModel : EpoxyModelWithHolder<MessageModel.ViewHolder>() {
 
     @EpoxyAttribute
-    lateinit var message: Message
+    var message: Message? = null
 
     @EpoxyAttribute
     lateinit var click: ClickListener
 
     override fun bind(holder: ViewHolder) {
-        message.show(holder.id, holder.content, holder.time, holder.item)
+        if (message == null) {
+            holder.id.show("0")
+            holder.content.show("null")
+            holder.time.show("null")
+        } else {
+            message?.show(holder.id, holder.content, holder.time, holder.item)
+        }
+
         holder.item.setOnClickListener {
             click.click()
         }
