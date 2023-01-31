@@ -1,9 +1,11 @@
 package com.pakollya.paginglist.data.cache.message
 
+import androidx.paging.DataSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MessagesDao {
@@ -16,6 +18,12 @@ interface MessagesDao {
 
     @Query("SELECT * FROM messages ORDER BY timestamp")
     fun messages(): List<Message.Data>
+
+    @Query("SELECT * FROM messages ORDER BY timestamp")
+    fun messagesFlow(): Flow<List<Message.Data>>
+
+    @Query("SELECT * FROM messages ORDER BY timestamp")
+    fun messagesDataSource(): DataSource.Factory<Int, Message.Data>
 
     @Query("SELECT * FROM messages WHERE timestamp >= :startDate AND timestamp < :endDate  ORDER BY timestamp")
     fun messages(startDate: Long, endDate: Long): List<Message.Data>
