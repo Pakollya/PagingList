@@ -29,8 +29,8 @@ class MainActivity : AppCompatActivity() {
             object : ClickListener {
                 override fun click() {
                     val randomId = 20900
-                    viewModel.messagesById(randomId)
                     viewModel.mapId(randomId)
+                    viewModel.messagesById(randomId)
                 }
             }
         )
@@ -45,6 +45,11 @@ class MainActivity : AppCompatActivity() {
 
         binding.addMessageButton.setOnClickListener{
             viewModel.addMessage()
+        }
+
+        viewModel.observePosition(this) {
+            binding.recyclerView.scrollToPosition(it)
+            Log.e("Activity position", "$it")
         }
 
         viewModel.observeId(this) {
