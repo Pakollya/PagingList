@@ -14,7 +14,7 @@ import kotlinx.coroutines.withContext
 class MessagesViewModel(
     private val repository: MessagesRepository,
     private val communication: Communication,
-    private val pager: MessagePager<PagingData<Message>>,
+    private val messagePager: MessagePager<PagingData<Message>>,
 ) : ViewModel(), Observe {
 
     fun init(isFirstRun: Boolean) {
@@ -29,28 +29,34 @@ class MessagesViewModel(
         }
     }
 
+    fun messagesFlow() {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.messagesFlow().collect { messages ->
+                communication.showMessages(messages)
+            }
+        }
+    }
+
     fun messages() {
         viewModelScope.launch(Dispatchers.IO) {
-            pager.messagePagingData(viewModelScope).collect { pagingData ->
+            messagePager.messagePagingData(viewModelScope).collect { pagingData ->
                 communication.showData(pagingData)
             }
+        }
+    }
+
+    fun updatePages() {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.updatePages()
         }
     }
 
     fun messagesById(id: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            val pageIndex = repository.pageIndexById(id)
-            pager.messagePagingData(viewModelScope, pageIndex).collect { pagingData ->
-                communication.showData(pagingData)
-            }
-        }
-    }
-
-    fun showPosition(id: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
             val position = repository.positionOnPageById(id)
-            withContext(Dispatchers.Main) {
-                communication.showPosition(position)
+            communication.showPosition(position)
+            messagePager.messagePagingData(viewModelScope, position).collect { pagingData ->
+                communication.showData(pagingData)
             }
         }
     }
@@ -79,5 +85,9 @@ class MessagesViewModel(
 
     override fun observeData(owner: LifecycleOwner, observer: Observer<PagingData<Message>>) {
         communication.observeData(owner, observer)
+    }
+
+    override fun observeMessages(owner: LifecycleOwner, observer: Observer<List<Message>>) {
+        communication.observeMessages(owner, observer)
     }
 }
