@@ -22,7 +22,8 @@ class MainActivity : AppCompatActivity() {
         viewModel = DependencyContainer.Base.provideViewModel(this.applicationContext)
 
         viewModel.init(savedInstanceState == null)
-
+        viewModel.messagesFlow()
+        viewModel.messages()
 
         val controller = MessageController(
             object : ClickListener {
@@ -30,14 +31,11 @@ class MainActivity : AppCompatActivity() {
                     val randomId = 20900
                     viewModel.messagesById(randomId)
                     viewModel.mapId(randomId)
-                    viewModel.showPosition(randomId)
                 }
             }
         )
 
         binding.recyclerView.adapter = controller.adapter
-
-        viewModel.messages()
 
         viewModel.observeData(this) { pagingData ->
             lifecycleScope.launchWhenStarted {
@@ -53,14 +51,12 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Move to $it item",Toast.LENGTH_LONG).show()
         }
 
-        viewModel.observePosition(this) {
-            binding.recyclerView.scrollToPosition(it)
-            Log.e("Activity position", "$it")
-        }
-
-
         viewModel.observeProgress(this) {
             binding.progress.visibility = it
+        }
+
+        viewModel.observeMessages(this) {
+            viewModel.updatePages()
         }
     }
 }
