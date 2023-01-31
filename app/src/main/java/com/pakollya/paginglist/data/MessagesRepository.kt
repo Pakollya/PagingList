@@ -56,7 +56,7 @@ interface MessagesRepository {
             if (messages.isNotEmpty()) {
                 messages.forEachIndexed { index, data ->
                     if (data.messageId() == id.toLong()) {
-                        position = (dayPart.startPosition + if(index > 2) (index - 2) else index)
+                        position = (dayPart.startPosition + index)
                         return@forEachIndexed
                     }
                 }
