@@ -4,6 +4,7 @@ import androidx.paging.*
 import com.pakollya.paginglist.data.MessagesRepository
 import com.pakollya.paginglist.data.cache.message.Message
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -22,10 +23,12 @@ interface MessagePager<T> {
                     prefetchDistance = 20,
                     enablePlaceholders = false
                 ),
-                initialKey = initialPage
-            ) {
-                MessagePagingSource(repository)
-            }.flow.cachedIn(scope).map {
+                initialKey = initialPage,
+                repository.messagesDataSource().asPagingSourceFactory(Dispatchers.IO)
+            )
+                .flow
+                .cachedIn(scope)
+                .map {
                 it.insertSeparators { first: Message?, second: Message? ->
                     if (second == null)
                         return@insertSeparators null
