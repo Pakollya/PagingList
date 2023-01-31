@@ -55,9 +55,10 @@ class MessagesViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val position = repository.positionOnPageById(id)
             communication.showPosition(position)
-            messagePager.messagePagingData(viewModelScope, position).collect { pagingData ->
-                communication.showData(pagingData)
-            }
+            //TODO: подумать есть ли еще способы перейти на необходимую страницу используя Pager
+//            messagePager.messagePagingData(viewModelScope, position).collect { pagingData ->
+//                communication.showData(pagingData)
+//            }
         }
     }
 
