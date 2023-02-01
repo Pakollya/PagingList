@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.pakollya.paginglist.DependencyContainer
+import com.pakollya.paginglist.data.MessagesRepository.Strategy.INIT
 import com.pakollya.paginglist.databinding.ActivityMainBinding
 import com.pakollya.paginglist.presentation.common.ClickListener
 import com.pakollya.paginglist.presentation.epoxy.MessageController
@@ -46,6 +47,8 @@ class MainActivity : AppCompatActivity() {
 
         viewModel.init(savedInstanceState == null)
 
+        viewModel.messages()
+
         viewModel.observeId(this) {
             Toast.makeText(this, "Move to $it item",Toast.LENGTH_LONG).show()
         }
@@ -55,12 +58,17 @@ class MainActivity : AppCompatActivity() {
             Log.e("Activity position", "$it")
         }
 
-        viewModel.observeMessages(this) {
-            controller.update(it)
-        }
-
         viewModel.observeProgress(this) {
             binding.progress.visibility = it
+        }
+
+        viewModel.observeMessagesFlow(this) {
+            Log.e("Activity", "Flow")
+            viewModel.loadMessages(INIT, it)
+        }
+
+        viewModel.observeMessages(this) { messagesUi ->
+            controller.load(messagesUi)
         }
     }
 }
