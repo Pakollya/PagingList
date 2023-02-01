@@ -1,7 +1,6 @@
 package com.pakollya.paginglist.data
 
-import android.util.Log
-import com.pakollya.paginglist.presentation.MessagesPageUi
+import com.pakollya.paginglist.presentation.PageUi
 import com.pakollya.paginglist.data.MessagesRepository.Strategy
 import com.pakollya.paginglist.data.cache.day.DayPart
 import com.pakollya.paginglist.data.cache.day.DayPartsDao
@@ -14,11 +13,9 @@ import java.util.*
 
 interface PagesRepository {
 
-    fun pageByStrategy(strategy: Strategy): Int
-    fun pageCount(): Int
-    fun pageSize(): Int
+    fun updateCurrentPages(strategy: Strategy)
     fun currentPages(): List<Int>
-    fun currentPagesUi(): List<MessagesPageUi>
+    fun currentPagesUi(): List<PageUi>
     fun isLastPage(): Boolean
     fun isFirstPage(): Boolean
 
@@ -27,15 +24,13 @@ interface PagesRepository {
     fun dateToStartDay(date: Long): Long
 
     fun updatePageCount(listCount: Int)
-    fun updatePage(pageIndex: Int): Boolean
+    fun updatePage(pageIndex: Int, enough: Boolean = true): Boolean
     fun pageIndexById(id: Long): Int
-    fun updateCurrentPageUi(page: MessagesPageUi, strategy: Strategy)
+    fun updateCurrentPageUi(uiList: List<PageUi>)
 
-    suspend fun setLastPage()
     suspend fun dayPartsByPageIndex(pageIndex: Int): List<DayPart>
     suspend fun dayPartById(id: Long): DayPart
     suspend fun parseDayParts(messages: List<Message.Data>, pageIndex: Int)
-    suspend fun lastPositionById(lastId: Long): Int
 
     fun currentPageMessages(
         messages: List<Message.Data>,
@@ -61,7 +56,7 @@ interface PagesRepository {
 
         //TODO: add pageCount and page storage
         private val currentPages = mutableListOf(0)
-        private val currentPagesUi = mutableListOf<MessagesPageUi>()
+        private val currentPagesUi = mutableListOf<PageUi>()
         private var pageCount = 0
 
         override fun currentPages(): List<Int> {
@@ -70,8 +65,8 @@ interface PagesRepository {
             return pages
         }
 
-        override fun currentPagesUi(): List<MessagesPageUi> {
-            val pages = mutableListOf<MessagesPageUi>()
+        override fun currentPagesUi(): List<PageUi> {
+            val pages = mutableListOf<PageUi>()
             pages.addAll(currentPagesUi)
             return pages
         }
@@ -92,39 +87,17 @@ interface PagesRepository {
             return false
         }
 
-        override fun updateCurrentPageUi(page: MessagesPageUi, strategy: Strategy) {
-            when (strategy) {
-                Strategy.NEXT -> {
-                    currentPagesUi.forEach {
-                        if (it.pageIndex == pageCount) return
-                    }
-                    if (currentPagesUi.size >= 2) {
-                        currentPagesUi.removeAt(0)
-                    }
-                    currentPagesUi.add(page)
-                }
-                Strategy.PREVIOUS -> {
-                    currentPagesUi.forEach {
-                        if (it.pageIndex == 0) return
-                    }
-                    if (currentPagesUi.size >= 2) {
-                        currentPagesUi.removeAt(1)
-                    }
-                    currentPagesUi.add(0, page)
-                }
-                Strategy.INIT -> {
-                    currentPagesUi.clear()
-                    currentPagesUi.add(page)
-                }
-            }
+        override fun updateCurrentPageUi(uiList: List<PageUi>) {
+            currentPagesUi.clear()
+            currentPagesUi.addAll(uiList)
         }
 
-        override fun pageByStrategy(strategy: Strategy): Int {
+        override fun updateCurrentPages(strategy: Strategy) {
             when (strategy) {
                 Strategy.NEXT -> {
                     currentPages.forEach {
                         if (it == pageCount) {
-                            return it
+                            return
                         }
                     }
 
@@ -132,29 +105,28 @@ interface PagesRepository {
                         currentPages.removeAt(0)
                     }
 
-                    currentPages.add(currentPages[0] + 1)
-                    return currentPages[1]
+                    val nextPage = currentPages.last() + 1
+                    currentPages.add(nextPage)
                 }
                 Strategy.PREVIOUS -> {
                     currentPages.forEach { page ->
-                        if (page == 0) return 0
+                        if (page == 0) {
+                            return
+                        }
                     }
 
                     if (currentPages.size >= 2) {
-                        currentPages.removeAt(1)
+                        currentPages.removeLast()
                     }
 
-                    currentPages.add(0, currentPages[0] - 1)
-                    return currentPages[0]
+                    val previousPage = currentPages[0] - 1
+                    currentPages.add(0, previousPage)
                 }
                 Strategy.INIT -> {
-                    return currentPages[0]
+                    return
                 }
             }
         }
-
-        override fun pageCount() = pageCount
-        override fun pageSize() = pageSize
 
         override fun dayMillis(): Long = 1000 * 60 * 60 * 24
 
@@ -174,7 +146,13 @@ interface PagesRepository {
 
         }
 
-        override fun updatePage(pageIndex: Int): Boolean {
+        /**
+         * получаем индекс страницы
+         * изменяем текущую страницу на данный индекс
+         * возвращаем True если страницу поменяли или False если остались на текущей
+         **/
+        override fun updatePage(pageIndex: Int, enough: Boolean): Boolean {
+            //проверяем находимся ли на данной странице
             currentPagesUi.forEach {
                 if (it.pageIndex == pageIndex) {
                     return false
@@ -182,6 +160,12 @@ interface PagesRepository {
             }
 
             currentPages.clear()
+
+            //если страница содержит меленькое количество элементов, то добавляем предыдущую страницу
+            if (!enough && pageCount > 0 && pageIndex > 0) {
+                currentPages.add(pageIndex - 1)
+            }
+
             currentPages.add(pageIndex)
 
             return true
@@ -189,11 +173,6 @@ interface PagesRepository {
 
         override fun pageIndexById(id: Long): Int {
             return pagesDao.pageIndexById(id)
-        }
-
-        override suspend fun setLastPage() {
-            currentPages.clear()
-            currentPages.add(pageCount)
         }
 
         /**
@@ -244,7 +223,6 @@ interface PagesRepository {
         ) {
             val pageList = mutableListOf<Page>()
 
-            Log.e("pageCount", "$pageCount")
             //пробегаемся по всем стриницам: делим список сообщений на стриницы, а страницы на дни
             for (pageIndex in 0..pageCount) {
 
@@ -287,11 +265,6 @@ interface PagesRepository {
          * По id сообщения получаем день (часть дня) в котором он находится
          **/
         override suspend fun dayPartById(id: Long) = dayPartsDao.dayPartById(id)
-
-        /**
-         * По последнему id сообщения получаем последнюю позицию на странице
-         **/
-        override suspend fun lastPositionById(lastId: Long) = dayPartsDao.lastPositionById(lastId)
 
         /**
          * Получаем список сообщений для одной страницы
