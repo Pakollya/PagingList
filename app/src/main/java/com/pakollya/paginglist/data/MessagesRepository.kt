@@ -1,9 +1,12 @@
 package com.pakollya.paginglist.data
 
-import com.pakollya.paginglist.presentation.MessagesPageUi
+import com.pakollya.paginglist.presentation.PageUi
 import com.pakollya.paginglist.data.MessagesRepository.Strategy.*
 import com.pakollya.paginglist.data.cache.message.Message
 import com.pakollya.paginglist.data.cache.message.MessagesDao
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 interface MessagesRepository {
 
@@ -14,12 +17,14 @@ interface MessagesRepository {
     }
 
     suspend fun init()
-    suspend fun messages(strategy: Strategy = INIT): MessagesPageUi
+    fun messagesFlow(): Flow<List<Message.Data>>
+    suspend fun updatePages(messages: List<Message.Data> = emptyList())
+    suspend fun updateMessages(strategy: Strategy = INIT): List<PageUi>
+
     suspend fun changePage(id: Int): Boolean
     suspend fun positionOnPageById(id: Int): Int
     suspend fun addMessage()
-    suspend fun setLastPage()
-    suspend fun lastPosition(): Int
+
     fun isLastPage(): Boolean
     fun isFirstPage(): Boolean
 
@@ -29,16 +34,67 @@ interface MessagesRepository {
         private val factory: MessageFactory
     ) : MessagesRepository {
 
-        override suspend fun init() {
+        private val mutex = Mutex()
+
+        override suspend fun init() = mutex.withLock {
             dao.delete()
             dao.insertMessages(factory.messages())
         }
 
+        override fun messagesFlow() = dao.messagesFlow()
+
+        override suspend fun updatePages(messages: List<Message.Data>) = mutex.withLock {
+            //Получаем все сообщения
+            val allMessages = messages.ifEmpty { dao.messages() }
+
+            //вычисляем количество страниц и сохраняем
+            pagesRepository.updatePageCount(allMessages.size)
+
+            //парсим все сообщения на страницы, а также на дни внутри страницы
+            pagesRepository.parseAllMessages(allMessages)
+        }
+
         /**
-         * Получаем индекс стриницы и количество стриниц
-         * отдаем список сообщений для данной стриницы на UI
+         * Получаем стратегию и отдаем список страниц в зависимости от стратегии
          **/
-        suspend fun messagesByPage(pageIndex: Int, pageCount: Int): List<Message> {
+        override suspend fun updateMessages(strategy: Strategy): List<PageUi> = mutex.withLock {
+            //Обновляем список страниц в зависимости от стратегии
+            pagesRepository.updateCurrentPages(strategy)
+
+            //получаем список актуальных страниц
+            val pages = pagesRepository.currentPages()
+
+            val uiList = mutableListOf<PageUi>()
+            var list: List<Message>
+
+            //пробегаемся по списку страниц и создаем PageUi для каждой страницы
+            pages.forEach { page ->
+                //получаем список сообщений для данной страницы
+                list = messagesByPage(page)
+                if (list.isNotEmpty()) {
+                    val ui = PageUi(
+                        list,
+                        page,
+                        list.size,
+                        INIT
+                    )
+
+                    uiList.add(ui)
+                }
+            }
+
+            //обновляем и сохраняем список актуальных PageUi
+            pagesRepository.updateCurrentPageUi(uiList)
+
+            return uiList
+        }
+
+
+        /**
+         * Получаем индекс стриницы
+         * отдаем список сообщений для данной стриницы
+         **/
+        suspend fun messagesByPage(pageIndex: Int): List<Message> {
             //создаем новый список для отображения
             val list = mutableListOf<Message>()
 
@@ -61,59 +117,24 @@ interface MessagesRepository {
         }
 
         /**
-         * Отдаем список сообщений для одной страницы в зависимости от стратегии
-         **/
-        override suspend fun messages(strategy: Strategy): MessagesPageUi {
-            //Получаем все сообщения
-            val allMessages = dao.messages()
-
-            //вычисляем количество страниц и сохраняем
-            pagesRepository.updatePageCount(allMessages.size)
-
-            //парсим все сообщения на страницы, а также на дни внутри страницы
-            pagesRepository.parseAllMessages(allMessages)
-
-            val pageIndex = pagesRepository.pageByStrategy(strategy)
-
-            val messages = messagesByPage(
-                pageIndex = pageIndex,
-                pageCount = pagesRepository.pageCount()
-            )
-
-            val messagesUi = MessagesPageUi(
-                messages = messages,
-                pageIndex = pageIndex,
-                pageSize = messages.size,
-                strategy = strategy
-            )
-
-            pagesRepository.updateCurrentPageUi(
-                page = messagesUi,
-                strategy = strategy
-            )
-
-            return messagesUi
-        }
-
-        /**
          * Меняем значение страницы на новый по id элемента
          **/
-        override suspend fun changePage(id: Int): Boolean {
+        override suspend fun changePage(id: Int): Boolean  = mutex.withLock {
             //Находим индекс страницы по id элемента
             val pageIndex = pagesRepository.pageIndexById(id.toLong())
 
-            //проверяем находимся ли мы сейчас на данной странице или на другой
-            return pagesRepository.updatePage(pageIndex)
-        }
+            //проверяем количество элементов на стринице
+            //если элеметов мало, то нужно подгрузить дополнительно предыдущую страницу
+            val messagesCount = messagesByPage(pageIndex).size
 
-        override suspend fun setLastPage() {
-            pagesRepository.setLastPage()
+            //проверяем находимся ли мы сейчас на данной странице или на другой
+            return pagesRepository.updatePage(pageIndex, messagesCount > 20)
         }
 
         /**
          * Вычисляем позицию элемента в списке по id (для RecyclerView)
          **/
-        override suspend fun positionOnPageById(id: Int): Int {
+        override suspend fun positionOnPageById(id: Int): Int = mutex.withLock {
             val dayPart = pagesRepository.dayPartById(id.toLong())
             val messages = dao.messagesById(dayPart.startId, dayPart.endId)
 
@@ -127,12 +148,17 @@ interface MessagesRepository {
             }
 
             //если мы уже находимся на странице, то проверяем вторая ли она (есть ли перед ней страница, чтобы скорректировать position)
-            val pages = pagesRepository.currentPagesUi()
+            val pages = pagesRepository.currentPages()
 
-            if (pages.isNotEmpty() && pages.size >= 2 && pages[1].pageIndex == dayPart.pageIndex) {
-                position += pages[0].pageSize
+            if (pages.isNotEmpty() && pages.size >= 2 && pages.last() == dayPart.pageIndex) {
+                pages.forEach {
+                    if (it == dayPart.pageIndex)
+                        return@forEach
+
+                    val messagesCount = messagesByPage(it).count()
+                    position += messagesCount
+                }
             }
-
 
             return position
         }
@@ -146,11 +172,6 @@ interface MessagesRepository {
                 "message ${lastId + 10}",
                 now
             ))
-        }
-
-        override suspend fun lastPosition(): Int {
-            val lastId = dao.lastId()
-            return pagesRepository.lastPositionById(lastId)
         }
 
         override fun isLastPage() = pagesRepository.isLastPage()
