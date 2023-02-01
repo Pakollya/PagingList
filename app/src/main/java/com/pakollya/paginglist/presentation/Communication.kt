@@ -3,6 +3,7 @@ package com.pakollya.paginglist.presentation
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import com.pakollya.paginglist.data.cache.message.Message
 import com.pakollya.paginglist.presentation.common.Observe
 
 interface Communication: Observe, IsSelectedId, IsLoading {
@@ -11,18 +12,21 @@ interface Communication: Observe, IsSelectedId, IsLoading {
 
     fun showPosition(position: Int)
 
-    fun showMessages(messages: MessagesPageUi)
+    fun showMessages(messages: List<PageUi>)
 
     fun showProgress(show: Int)
 
     fun mapIsLoading(isLoading: Boolean)
 
+    fun mapMessages(messages: List<Message.Data>)
+
     class Base(
         private val id: MutableLiveData<Int> = MutableLiveData<Int>(),
         private val position: MutableLiveData<Int> = MutableLiveData<Int>(),
-        private val messages: MutableLiveData<MessagesPageUi> = MutableLiveData<MessagesPageUi>(),
         private val progress: MutableLiveData<Int> = MutableLiveData<Int>(),
-        private val isLoading: MutableLiveData<Boolean> = MutableLiveData<Boolean>(false)
+        private val isLoading: MutableLiveData<Boolean> = MutableLiveData<Boolean>(false),
+        private val messagesFlow: MutableLiveData<List<Message.Data>> = MutableLiveData<List<Message.Data>>(),
+        private val messages: MutableLiveData<List<PageUi>> = MutableLiveData<List<PageUi>>()
     ): Communication {
         override fun showNewId(id: Int) {
             this.id.value = id
@@ -32,16 +36,20 @@ interface Communication: Observe, IsSelectedId, IsLoading {
             this.position.postValue(position)
         }
 
-        override fun showMessages(messages: MessagesPageUi) {
-            this.messages.value = messages
-        }
-
         override fun showProgress(show: Int) {
             this.progress.postValue(show)
         }
 
         override fun mapIsLoading(isLoading: Boolean) {
             this.isLoading.value = isLoading
+        }
+
+        override fun mapMessages(messages: List<Message.Data>) {
+            this.messagesFlow.postValue(messages)
+        }
+
+        override fun showMessages(messages: List<PageUi>) {
+            this.messages.postValue(messages)
         }
 
         override fun isLoading(): Boolean {
@@ -65,12 +73,19 @@ interface Communication: Observe, IsSelectedId, IsLoading {
             position.observe(owner, observer)
         }
 
-        override fun observeMessages(owner: LifecycleOwner, observer: Observer<MessagesPageUi>) {
-            messages.observe(owner, observer)
-        }
-
         override fun observeProgress(owner: LifecycleOwner, observer: Observer<Int>) {
             progress.observe(owner, observer)
+        }
+
+        override fun observeMessagesFlow(owner: LifecycleOwner, observer: Observer<List<Message.Data>>) {
+            messagesFlow.observe(owner, observer)
+        }
+
+        override fun observeMessages(
+            owner: LifecycleOwner,
+            observer: Observer<List<PageUi>>
+        ) {
+            messages.observe(owner, observer)
         }
     }
 }
