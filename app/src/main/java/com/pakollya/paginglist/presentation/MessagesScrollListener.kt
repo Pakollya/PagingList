@@ -2,6 +2,9 @@ package com.pakollya.paginglist.presentation
 
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.pakollya.paginglist.data.MessagesRepository
+import com.pakollya.paginglist.data.MessagesRepository.Strategy.NEXT
+import com.pakollya.paginglist.data.MessagesRepository.Strategy.PREVIOUS
 import com.pakollya.paginglist.presentation.common.Load
 
 class MessagesScrollListener(
@@ -22,11 +25,11 @@ class MessagesScrollListener(
 
         if (!load.isLoading()) {
             if ((visibleItemCount + pastVisibleItems) >= totalItemCount) {
-                load.loadNext()
+                load.loadMessages(NEXT)
             }
 
             if (pastVisibleItems <= visibleItemCount) {
-                load.loadPrevious()
+                load.loadMessages(PREVIOUS)
             }
         }
     }
