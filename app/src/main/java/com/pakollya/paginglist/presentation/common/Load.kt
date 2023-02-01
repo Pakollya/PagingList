@@ -1,12 +1,12 @@
 package com.pakollya.paginglist.presentation.common
 
-interface Load : LoadNext, LoadPrevious, MapIsLoading, IsLoading
-interface LoadNext{
-    fun loadNext()
-}
+import com.pakollya.paginglist.data.MessagesRepository.Strategy
+import com.pakollya.paginglist.data.MessagesRepository.Strategy.INIT
+import com.pakollya.paginglist.data.cache.message.Message
 
-interface LoadPrevious{
-    fun loadPrevious()
+interface Load : LoadMessages, MapIsLoading, IsLoading
+interface LoadMessages{
+    fun loadMessages(strategy: Strategy = INIT, messages: List<Message.Data> = emptyList())
 }
 
 interface MapIsLoading {
